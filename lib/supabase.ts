@@ -2,8 +2,17 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+// Public client for client-side use (products only)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Server-side client that bypasses RLS — use only in Server Components
+export const supabaseAdmin = createClient(
+  supabaseUrl,
+  supabaseServiceKey ?? supabaseAnonKey,
+  { auth: { persistSession: false } }
+)
 
 export type Product = {
   id: string
@@ -52,6 +61,17 @@ export type WorkflowRun = {
   duration_ms: number | null
   items_processed: number
   error_message: string | null
+}
+
+export type AppError = {
+  id: number
+  workflow_id: string
+  workflow_name: string | null
+  node_name: string | null
+  product_id: string | null
+  error_message: string
+  status: string
+  occurred_at: string
 }
 
 export type ProductStats = {

@@ -1,4 +1,4 @@
-import { supabase, ProductStats } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -28,30 +28,29 @@ const STATUS_DOT: Record<string, string> = {
 export const revalidate = 60
 
 export default async function DashboardPage() {
-  const { data: stats } = await supabase
-    .from('products')
-    .select('*')
-    .eq('active', true)
-    .order('name')
+  const [
+    { data: products },
+    { data: allPubs },
+    { data: workflows },
+    { data: scheduled },
+    { data: openErrors },
+  ] = await Promise.all([
+    supabaseAdmin.from('products').select('*').eq('active', true).order('name'),
+    supabaseAdmin.from('publications').select('id,product_id,platform,status,topic,publish_url,published_at,created_at').order('created_at', { ascending: false }).limit(50),
+    supabaseAdmin.from('workflow_runs').select('*').order('started_at', { ascending: false }).limit(6),
+    supabaseAdmin.from('content_plan').select('id').eq('status', 'scheduled'),
+    supabaseAdmin.from('errors').select('id').eq('status', 'open'),
+  ])
 
-  const { data: recentPubs } = await supabase
-    .from('publications')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(10)
+  const pubs = allPubs || []
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const { data: workflows } = await supabase
-    .from('workflow_runs')
-    .select('*')
-    .order('started_at', { ascending: false })
-    .limit(5)
+  const totalPublished = pubs.filter(p => p.status === 'published').length
+  const publishedThisWeek = pubs.filter(p => p.status === 'published' && p.published_at && p.published_at > weekAgo).length
+  const totalScheduled = (scheduled || []).length
+  const totalErrors = (openErrors || []).length
 
-  const productStats = (stats || []) as any[]
-
-  const totalPublished = 0
-  const totalErrors = 0
-  const totalScheduled = 0
-  const publishedThisWeek = 0
+  const recentPubs = pubs.slice(0, 10)
 
   return (
     <div className="space-y-8">
@@ -81,66 +80,68 @@ export default async function DashboardPage() {
       <div>
         <h2 className="text-lg font-semibold text-white mb-4">Products</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {productStats.map((product) => (
-            <Link
-              key={product.id}
-              href={`/products/${product.id}`}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-indigo-500/50 hover:bg-gray-900/80 transition-all group"
-            >
-              {/* Product header */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold text-white group-hover:text-indigo-400 transition-colors">
-                    {product.name}
-                  </h3>
-                  {product.site && (
-                    <p className="text-gray-500 text-xs mt-0.5">{product.site}</p>
-                  )}
+          {(products || []).map((product) => {
+            const productPubs = pubs.filter(p => p.product_id === product.id)
+            const pubCount = productPubs.filter(p => p.status === 'published').length
+            const weekCount = productPubs.filter(p => p.status === 'published' && p.published_at && p.published_at > weekAgo).length
+            return (
+              <Link
+                key={product.id}
+                href={`/products/${product.id}`}
+                className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-indigo-500/50 hover:bg-gray-900/80 transition-all group"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-semibold text-white group-hover:text-indigo-400 transition-colors">
+                      {product.name}
+                    </h3>
+                    {product.site && (
+                      <p className="text-gray-500 text-xs mt-0.5">{product.site}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded-full">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                    active
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
-                  active
+
+                {product.one_liner && (
+                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">{product.one_liner}</p>
+                )}
+
+                {/* Mini stats */}
+                {pubCount > 0 && (
+                  <div className="flex gap-4 mb-3 text-xs text-gray-500">
+                    <span><span className="text-emerald-400 font-medium">{pubCount}</span> published</span>
+                    {weekCount > 0 && <span><span className="text-blue-400 font-medium">{weekCount}</span> this week</span>}
+                  </div>
+                )}
+
+                {/* Channels */}
+                <div className="flex flex-wrap gap-1.5">
+                  {(product.channels || []).map((ch: string) => (
+                    <span key={ch} className="bg-gray-800 text-gray-400 text-xs px-2 py-0.5 rounded">
+                      {PLATFORM_ICONS[ch] || ch} {ch}
+                    </span>
+                  ))}
                 </div>
-              </div>
-
-              {/* Stats row */}
-              <div className="grid grid-cols-1 gap-2 mb-4">
-                <div className="text-center">
-                  <p className="text-sm text-gray-400">{product.one_liner}</p>
-                </div>
-              </div>
-
-              {/* Channels */}
-              <div className="flex flex-wrap gap-1.5">
-                {(product.channels || []).map((ch: string) => (
-                  <span key={ch} className="bg-gray-800 text-gray-400 text-xs px-2 py-0.5 rounded">
-                    {PLATFORM_ICONS[ch] || ch} {ch}
-                  </span>
-                ))}
-              </div>
-
-              {/* Last published */}
-              {product.site && (
-                <p className="text-gray-600 text-xs mt-3">
-                  {product.site}
-                </p>
-              )}
-            </Link>
-          ))}
+              </Link>
+            )
+          })}
         </div>
       </div>
 
-      {/* Bottom row: recent publications + workflows */}
+      {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Recent publications */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <h2 className="text-base font-semibold text-white mb-4">Recent Publications</h2>
-          <div className="space-y-2">
-            {(recentPubs || []).length === 0 && (
+          <div className="space-y-1">
+            {recentPubs.length === 0 && (
               <p className="text-gray-500 text-sm text-center py-8">No publications yet</p>
             )}
-            {(recentPubs || []).map((pub: any) => (
+            {recentPubs.map((pub: any) => (
               <div key={pub.id} className="flex items-center gap-3 py-2 border-b border-gray-800/50 last:border-0">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[pub.status] || 'bg-gray-500'}`} />
                 <div className="flex-1 min-w-0">
@@ -149,9 +150,7 @@ export default async function DashboardPage() {
                 </div>
                 {pub.publish_url && (
                   <a href={pub.publish_url} target="_blank" rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-indigo-400 text-xs flex-shrink-0">
-                    ↗
-                  </a>
+                    className="text-gray-500 hover:text-indigo-400 text-xs flex-shrink-0">↗</a>
                 )}
               </div>
             ))}
@@ -161,7 +160,7 @@ export default async function DashboardPage() {
         {/* Workflow runs */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <h2 className="text-base font-semibold text-white mb-4">Workflow Runs</h2>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {(workflows || []).length === 0 && (
               <p className="text-gray-500 text-sm text-center py-8">No workflow runs yet</p>
             )}
@@ -174,8 +173,7 @@ export default async function DashboardPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-200">{run.workflow_name || run.workflow_id}</p>
                   <p className="text-xs text-gray-500">
-                    {run.product_id || 'all'} ·
-                    {run.duration_ms ? ` ${(run.duration_ms / 1000).toFixed(1)}s` : ''}
+                    {run.product_id || 'all'}{run.duration_ms ? ` · ${(run.duration_ms / 1000).toFixed(1)}s` : ''}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
