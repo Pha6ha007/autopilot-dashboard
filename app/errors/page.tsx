@@ -1,5 +1,5 @@
 import { supabaseAdmin as supabase } from '@/lib/supabase'
-import { format } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 
 export const revalidate = 30
 
@@ -10,52 +10,45 @@ export default async function ErrorsPage() {
     .order('occurred_at', { ascending: false })
     .limit(50)
 
-  const openCount = (errors || []).filter((e: any) => e.status === 'open').length
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Errors</h1>
-        {openCount > 0 && (
-          <span className="bg-red-500/10 text-red-400 border border-red-500/20 text-sm px-3 py-1 rounded-full">
-            {openCount} open
-          </span>
-        )}
+      <div className="fade-up">
+        <h1 className="font-display text-[28px] font-semibold text-gray-900 tracking-tight">Errors</h1>
+        <p className="text-gray-400 text-sm mt-1">
+          {(errors || []).filter((e: any) => e.status === 'open').length} open issues
+        </p>
       </div>
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-800">
-              <th className="text-left text-gray-500 font-medium px-4 py-3">Workflow</th>
-              <th className="text-left text-gray-500 font-medium px-4 py-3">Node</th>
-              <th className="text-left text-gray-500 font-medium px-4 py-3">Error</th>
-              <th className="text-left text-gray-500 font-medium px-4 py-3">Status</th>
-              <th className="text-left text-gray-500 font-medium px-4 py-3">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(errors || []).length === 0 && (
-              <tr><td colSpan={5} className="text-center text-gray-500 py-12">✅ No errors logged</td></tr>
-            )}
-            {(errors || []).map((err: any) => (
-              <tr key={err.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                <td className="px-4 py-3 text-gray-300">{err.workflow_name || err.workflow_id || '—'}</td>
-                <td className="px-4 py-3 text-gray-400">{err.node_name || '—'}</td>
-                <td className="px-4 py-3 text-red-400 max-w-sm truncate">{err.error_message}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    err.status === 'resolved'
-                      ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-red-500/10 text-red-400'
-                  }`}>{err.status}</span>
-                </td>
-                <td className="px-4 py-3 text-gray-500 text-xs">
-                  {format(new Date(err.occurred_at), 'MMM dd HH:mm')}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      <div className="space-y-3 fade-up">
+        {(errors || []).length === 0 && (
+          <div className="glass rounded-2xl p-16 text-center">
+            <p className="text-4xl mb-3">✅</p>
+            <p className="text-gray-500 font-medium">No errors — all workflows healthy</p>
+          </div>
+        )}
+        {(errors || []).map((err: any) => (
+          <div key={err.id} className={`glass rounded-2xl p-5 border-l-4 ${
+            err.status === 'open' ? 'border-l-red-400' :
+            err.status === 'resolved' ? 'border-l-emerald-400' : 'border-l-gray-300'
+          }`}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`pill ${err.status === 'open' ? 'pill-red' : 'pill-green'}`}>
+                    {err.status}
+                  </span>
+                  <span className="text-gray-400 text-xs">{err.workflow_name || err.workflow_id}</span>
+                  {err.node_name && <span className="text-gray-300 text-xs">→ {err.node_name}</span>}
+                  {err.product_id && <span className="pill pill-violet">{err.product_id}</span>}
+                </div>
+                <p className="text-gray-800 text-[13px] font-medium">{err.error_message}</p>
+              </div>
+              <p className="text-gray-400 text-xs flex-shrink-0">
+                {formatDistanceToNow(new Date(err.occurred_at), { addSuffix: true })}
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

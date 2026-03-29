@@ -1,38 +1,59 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
+import { DM_Sans, Instrument_Sans } from 'next/font/google'
 import Link from 'next/link'
+import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-body', weight: ['300','400','500','600'] })
+const instrumentSans = Instrument_Sans({ subsets: ['latin'], variable: '--font-display', weight: ['400','500','600','700'] })
 
 export const metadata: Metadata = {
-  title: 'Autopilot Dashboard',
-  description: 'Content automation command center',
+  title: 'Autopilot — Command Center',
+  description: 'Content automation dashboard',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-gray-950 text-gray-100 min-h-screen`}>
-        <nav className="border-b border-gray-800 bg-gray-900/50 backdrop-blur sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-14">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-indigo-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">A</div>
-                <span className="font-semibold text-white">Autopilot</span>
-              </Link>
-              <div className="flex items-center gap-6 text-sm text-gray-400">
-                <Link href="/" className="hover:text-white transition-colors">Dashboard</Link>
-                <Link href="/content" className="hover:text-white transition-colors">Content Plan</Link>
-                <Link href="/workflows" className="hover:text-white transition-colors">Workflows</Link>
-                <Link href="/errors" className="hover:text-white transition-colors">Errors</Link>
-              </div>
-            </div>
+    <html lang="en" className={`${dmSans.variable} ${instrumentSans.variable}`}>
+      <body>
+        <div className="min-h-screen bg-surface">
+          {/* Ambient background blobs */}
+          <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+            <div className="blob blob-1" />
+            <div className="blob blob-2" />
+            <div className="blob blob-3" />
           </div>
-        </nav>
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-        </main>
+
+          {/* Navbar */}
+          <header className="nav-glass sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-2.5 group">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-md shadow-indigo-200 group-hover:shadow-indigo-300 transition-shadow">
+                  <span className="text-white text-sm font-bold">A</span>
+                </div>
+                <span className="font-display font-semibold text-gray-800 text-[15px]">Autopilot</span>
+              </Link>
+
+              <nav className="flex items-center gap-1">
+                {[
+                  { href: '/', label: 'Dashboard' },
+                  { href: '/content', label: 'Content Plan' },
+                  { href: '/workflows', label: 'Workflows' },
+                  { href: '/errors', label: 'Errors' },
+                ].map(({ href, label }) => (
+                  <Link key={href} href={href}
+                    className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-gray-900 hover:bg-white/70 transition-all font-medium">
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </header>
+
+          {/* Main */}
+          <main className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   )

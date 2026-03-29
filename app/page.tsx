@@ -1,31 +1,19 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
-
-const PLATFORM_ICONS: Record<string, string> = {
-  youtube: '▶',
-  telegram: '✈',
-  linkedin: 'in',
-  twitter: 'X',
-  instagram: '◈',
-  tiktok: '♪',
-  devto: '{ }',
-  hashnode: '#',
-  medium: 'M',
-  buffer: '⊡',
-  facebook: 'f',
-  reddit: '◉',
-}
-
-const STATUS_DOT: Record<string, string> = {
-  published: 'bg-emerald-500',
-  scheduled: 'bg-blue-500',
-  generating: 'bg-yellow-500',
-  failed: 'bg-red-500',
-  skipped: 'bg-gray-500',
-}
+import { PlatformIcon } from '@/components/PlatformIcon'
 
 export const revalidate = 60
+
+const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
+  published: { label: 'published', cls: 'pill-green' },
+  scheduled:  { label: 'scheduled', cls: 'pill-blue' },
+  generating: { label: 'generating', cls: 'pill-yellow' },
+  failed:     { label: 'failed', cls: 'pill-red' },
+  skipped:    { label: 'skipped', cls: 'pill-gray' },
+  success:    { label: 'success', cls: 'pill-green' },
+  running:    { label: 'running', cls: 'pill-yellow' },
+}
 
 export default async function DashboardPage() {
   const [
@@ -50,78 +38,91 @@ export default async function DashboardPage() {
   const totalScheduled = (scheduled || []).length
   const totalErrors = (openErrors || []).length
 
-  const recentPubs = pubs.slice(0, 10)
+  const recentPubs = pubs.slice(0, 8)
+
+  const statsCards = [
+    { label: 'Total Published', value: totalPublished, sub: 'all time', gradient: 'from-emerald-400 to-teal-500', bg: 'from-emerald-50 to-teal-50' },
+    { label: 'This Week', value: publishedThisWeek, sub: 'last 7 days', gradient: 'from-blue-400 to-indigo-500', bg: 'from-blue-50 to-indigo-50' },
+    { label: 'Scheduled', value: totalScheduled, sub: 'upcoming', gradient: 'from-violet-400 to-purple-500', bg: 'from-violet-50 to-purple-50' },
+    { label: 'Open Errors', value: totalErrors, sub: 'need attention', gradient: 'from-rose-400 to-red-500', bg: 'from-rose-50 to-red-50' },
+  ]
 
   return (
     <div className="space-y-8">
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Command Center</h1>
-        <p className="text-gray-400 text-sm mt-1">All products · real-time</p>
+      {/* Page header */}
+      <div className="fade-up">
+        <h1 className="font-display text-[28px] font-semibold text-gray-900 tracking-tight">Command Center</h1>
+        <p className="text-gray-400 text-sm mt-1">All products · live sync</p>
       </div>
 
-      {/* Top stats */}
+      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total published', value: totalPublished, color: 'text-emerald-400' },
-          { label: 'This week', value: publishedThisWeek, color: 'text-blue-400' },
-          { label: 'Scheduled', value: totalScheduled, color: 'text-yellow-400' },
-          { label: 'Errors', value: totalErrors, color: 'text-red-400' },
-        ].map((s) => (
-          <div key={s.label} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <p className="text-gray-500 text-xs uppercase tracking-wide">{s.label}</p>
-            <p className={`text-3xl font-bold mt-1 ${s.color}`}>{s.value}</p>
+        {statsCards.map((s, i) => (
+          <div key={s.label} className={`glass rounded-2xl p-5 stat-card fade-up delay-${i + 1}`}>
+            <div className={`inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br ${s.gradient} mb-3 shadow-sm`}>
+              <span className="text-white text-base font-bold">{s.value < 10 ? s.value : '✓'}</span>
+            </div>
+            <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">{s.label}</p>
+            <p className="text-3xl font-display font-semibold text-gray-900 mt-0.5">{s.value}</p>
+            <p className="text-gray-400 text-xs mt-1">{s.sub}</p>
           </div>
         ))}
       </div>
 
       {/* Products grid */}
-      <div>
-        <h2 className="text-lg font-semibold text-white mb-4">Products</h2>
+      <div className="fade-up">
+        <h2 className="font-display text-lg font-semibold text-gray-800 mb-4">Products</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {(products || []).map((product) => {
             const productPubs = pubs.filter(p => p.product_id === product.id)
             const pubCount = productPubs.filter(p => p.status === 'published').length
             const weekCount = productPubs.filter(p => p.status === 'published' && p.published_at && p.published_at > weekAgo).length
             return (
-              <Link
-                key={product.id}
-                href={`/products/${product.id}`}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-indigo-500/50 hover:bg-gray-900/80 transition-all group"
-              >
+              <Link key={product.id} href={`/products/${product.id}`}
+                className="glass glass-hover rounded-2xl p-5 block group">
+
+                {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h3 className="font-semibold text-white group-hover:text-indigo-400 transition-colors">
+                    <h3 className="font-display font-semibold text-gray-900 text-[15px] group-hover:text-indigo-600 transition-colors">
                       {product.name}
                     </h3>
                     {product.site && (
-                      <p className="text-gray-500 text-xs mt-0.5">{product.site}</p>
+                      <p className="text-gray-400 text-xs mt-0.5">{product.site}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded-full">
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                  <span className="pill pill-green">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"/>
                     active
-                  </div>
+                  </span>
                 </div>
 
+                {/* Description */}
                 {product.one_liner && (
-                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">{product.one_liner}</p>
+                  <p className="text-gray-500 text-sm mb-3 leading-relaxed line-clamp-2">{product.one_liner}</p>
                 )}
 
                 {/* Mini stats */}
                 {pubCount > 0 && (
-                  <div className="flex gap-4 mb-3 text-xs text-gray-500">
-                    <span><span className="text-emerald-400 font-medium">{pubCount}</span> published</span>
-                    {weekCount > 0 && <span><span className="text-blue-400 font-medium">{weekCount}</span> this week</span>}
+                  <div className="flex gap-3 mb-3">
+                    <span className="text-xs text-gray-500">
+                      <span className="font-semibold text-emerald-600">{pubCount}</span> published
+                    </span>
+                    {weekCount > 0 && (
+                      <span className="text-xs text-gray-500">
+                        <span className="font-semibold text-blue-600">{weekCount}</span> this week
+                      </span>
+                    )}
                   </div>
                 )}
 
-                {/* Channels */}
+                {/* Platform icons */}
                 <div className="flex flex-wrap gap-1.5">
                   {(product.channels || []).map((ch: string) => (
-                    <span key={ch} className="bg-gray-800 text-gray-400 text-xs px-2 py-0.5 rounded">
-                      {PLATFORM_ICONS[ch] || ch} {ch}
+                    <span key={ch} className="platform-pill">
+                      <PlatformIcon platform={ch} size={13}/>
+                      <span className="capitalize">{ch}</span>
                     </span>
                   ))}
                 </div>
@@ -132,25 +133,36 @@ export default async function DashboardPage() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 fade-up">
 
         {/* Recent publications */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h2 className="text-base font-semibold text-white mb-4">Recent Publications</h2>
-          <div className="space-y-1">
+        <div className="glass rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display font-semibold text-gray-800 text-base">Recent Publications</h2>
+            <span className="text-xs text-gray-400">{recentPubs.length} items</span>
+          </div>
+          <div className="space-y-0.5">
             {recentPubs.length === 0 && (
-              <p className="text-gray-500 text-sm text-center py-8">No publications yet</p>
+              <p className="text-gray-400 text-sm text-center py-10">No publications yet</p>
             )}
             {recentPubs.map((pub: any) => (
-              <div key={pub.id} className="flex items-center gap-3 py-2 border-b border-gray-800/50 last:border-0">
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[pub.status] || 'bg-gray-500'}`} />
+              <div key={pub.id} className="flex items-center gap-3 py-2.5 border-b border-gray-100/80 last:border-0 row-hover rounded-lg px-1">
+                <PlatformIcon platform={pub.platform} size={20}/>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-200 truncate">{pub.topic}</p>
-                  <p className="text-xs text-gray-500">{pub.product_id} · {pub.platform}</p>
+                  <p className="text-[13px] text-gray-800 truncate font-medium">{pub.topic}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {pub.product_id}
+                    {pub.published_at && (
+                      <> · {formatDistanceToNow(new Date(pub.published_at), { addSuffix: true })}</>
+                    )}
+                  </p>
                 </div>
+                <span className={`pill flex-shrink-0 ${STATUS_CONFIG[pub.status]?.cls || 'pill-gray'}`}>
+                  {pub.status}
+                </span>
                 {pub.publish_url && (
                   <a href={pub.publish_url} target="_blank" rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-indigo-400 text-xs flex-shrink-0">↗</a>
+                    className="text-gray-300 hover:text-indigo-500 transition-colors flex-shrink-0 text-sm">↗</a>
                 )}
               </div>
             ))}
@@ -158,35 +170,38 @@ export default async function DashboardPage() {
         </div>
 
         {/* Workflow runs */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h2 className="text-base font-semibold text-white mb-4">Workflow Runs</h2>
-          <div className="space-y-1">
+        <div className="glass rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display font-semibold text-gray-800 text-base">Workflow Runs</h2>
+            <Link href="/workflows" className="text-xs text-indigo-500 hover:text-indigo-700 transition-colors">View all →</Link>
+          </div>
+          <div className="space-y-0.5">
             {(workflows || []).length === 0 && (
-              <p className="text-gray-500 text-sm text-center py-8">No workflow runs yet</p>
+              <p className="text-gray-400 text-sm text-center py-10">No runs yet</p>
             )}
             {(workflows || []).map((run: any) => (
-              <div key={run.id} className="flex items-center gap-3 py-2 border-b border-gray-800/50 last:border-0">
+              <div key={run.id} className="flex items-center gap-3 py-2.5 border-b border-gray-100/80 last:border-0 row-hover rounded-lg px-1">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                  run.status === 'success' ? 'bg-emerald-500' :
-                  run.status === 'failed' ? 'bg-red-500' : 'bg-yellow-500'
+                  run.status === 'success' ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' :
+                  run.status === 'failed'  ? 'bg-red-500 shadow-[0_0_6px_#ef4444]' :
+                  'bg-amber-400 shadow-[0_0_6px_#f59e0b]'
                 }`} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-200">{run.workflow_name || run.workflow_id}</p>
-                  <p className="text-xs text-gray-500">
-                    {run.product_id || 'all'}{run.duration_ms ? ` · ${(run.duration_ms / 1000).toFixed(1)}s` : ''}
+                  <p className="text-[13px] text-gray-800 font-medium">{run.workflow_name || run.workflow_id}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {run.product_id || 'all products'}
+                    {run.duration_ms && <> · {(run.duration_ms / 1000).toFixed(1)}s</>}
+                    {run.items_processed > 0 && <> · {run.items_processed} items</>}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
-                  run.status === 'success' ? 'bg-emerald-500/10 text-emerald-400' :
-                  run.status === 'failed' ? 'bg-red-500/10 text-red-400' :
-                  'bg-yellow-500/10 text-yellow-400'
-                }`}>
+                <span className={`pill flex-shrink-0 ${STATUS_CONFIG[run.status]?.cls || 'pill-gray'}`}>
                   {run.status}
                 </span>
               </div>
             ))}
           </div>
         </div>
+
       </div>
     </div>
   )

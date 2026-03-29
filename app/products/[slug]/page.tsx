@@ -2,114 +2,129 @@ import { supabaseAdmin as supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { formatDistanceToNow, format } from 'date-fns'
+import { PlatformIcon } from '@/components/PlatformIcon'
 
 export const revalidate = 30
 
-const PLATFORM_ICONS: Record<string, string> = {
-  youtube: '▶', telegram: '✈', linkedin: 'in', twitter: 'X',
-  instagram: '◈', tiktok: '♪', devto: '{}', hashnode: '#',
-  medium: 'M', buffer: '⊡', facebook: 'f', reddit: '◉',
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  published: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  scheduled:  'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  generating: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  failed:     'bg-red-500/10 text-red-400 border-red-500/20',
-  skipped:    'bg-gray-500/10 text-gray-400 border-gray-500/20',
-  draft:      'bg-gray-500/10 text-gray-400 border-gray-500/20',
+const STATUS_CLS: Record<string, string> = {
+  published: 'pill-green',
+  scheduled:  'pill-blue',
+  generating: 'pill-yellow',
+  failed:     'pill-red',
+  skipped:    'pill-gray',
+  draft:      'pill-gray',
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  const [{ data: product }, { data: publications }, { data: plan }, { data: platformStats }] =
-    await Promise.all([
-      supabase.from('products').select('*').eq('id', slug).single(),
-      supabase.from('publications').select('*').eq('product_id', slug)
-        .order('created_at', { ascending: false }).limit(20),
-      supabase.from('content_plan').select('*').eq('product_id', slug)
-        .gte('scheduled_for', new Date().toISOString().split('T')[0])
-        .order('scheduled_for').limit(10),
-      supabase.from('platform_stats').select('*').eq('product_id', slug),
-    ])
+  const [{ data: product }, { data: publications }, { data: plan }] = await Promise.all([
+    supabase.from('products').select('*').eq('id', slug).single(),
+    supabase.from('publications').select('*').eq('product_id', slug)
+      .order('created_at', { ascending: false }).limit(20),
+    supabase.from('content_plan').select('*').eq('product_id', slug)
+      .gte('scheduled_for', new Date().toISOString().split('T')[0])
+      .order('scheduled_for').limit(10),
+  ])
 
   if (!product) notFound()
 
-  // Aggregate stats from publications
   const pubs = publications || []
   const s = {
-    total_published: pubs.filter((p: any) => p.status === 'published').length,
-    published_last_30d: pubs.filter((p: any) => p.status === 'published' && new Date(p.published_at) > new Date(Date.now() - 30 * 86400000)).length,
-    published_last_7d: pubs.filter((p: any) => p.status === 'published' && new Date(p.published_at) > new Date(Date.now() - 7 * 86400000)).length,
-    total_errors: pubs.filter((p: any) => p.status === 'failed').length,
+    total:   pubs.filter((p: any) => p.status === 'published').length,
+    last30:  pubs.filter((p: any) => p.status === 'published' && new Date(p.published_at) > new Date(Date.now() - 30 * 86400000)).length,
+    last7:   pubs.filter((p: any) => p.status === 'published' && new Date(p.published_at) > new Date(Date.now() - 7 * 86400000)).length,
+    errors:  pubs.filter((p: any) => p.status === 'failed').length,
+  }
+
+  // Platform breakdown
+  const platformMap: Record<string, { published: number; failed: number; last?: string }> = {}
+  for (const pub of pubs) {
+    if (!platformMap[pub.platform]) platformMap[pub.platform] = { published: 0, failed: 0 }
+    if (pub.status === 'published') {
+      platformMap[pub.platform].published++
+      if (!platformMap[pub.platform].last || pub.published_at > platformMap[pub.platform].last!) {
+        platformMap[pub.platform].last = pub.published_at
+      }
+    }
+    if (pub.status === 'failed') platformMap[pub.platform].failed++
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
 
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Link href="/" className="hover:text-white transition-colors">Dashboard</Link>
+      <div className="flex items-center gap-2 text-sm text-gray-400 fade-up">
+        <Link href="/" className="hover:text-gray-700 transition-colors">Dashboard</Link>
         <span>›</span>
-        <span className="text-white">{product.name}</span>
+        <span className="text-gray-700 font-medium">{product.name}</span>
       </div>
 
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{product.name}</h1>
-          {product.site && (
-            <a href={`https://${product.site}`} target="_blank" rel="noopener noreferrer"
-              className="text-indigo-400 text-sm hover:underline mt-1 inline-block">
-              {product.site} ↗
+      {/* Hero header */}
+      <div className="glass rounded-2xl p-6 fade-up">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="font-display text-2xl font-semibold text-gray-900">{product.name}</h1>
+              <span className="pill pill-green">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"/>
+                active
+              </span>
+            </div>
+            {product.site && (
+              <a href={`https://${product.site}`} target="_blank" rel="noopener noreferrer"
+                className="text-indigo-500 text-sm hover:text-indigo-700 transition-colors font-medium">
+                {product.site} ↗
+              </a>
+            )}
+            {product.one_liner && (
+              <p className="text-gray-500 text-sm mt-2 max-w-2xl leading-relaxed">{product.one_liner}</p>
+            )}
+          </div>
+          {product.cta_link && (
+            <a href={product.cta_link} target="_blank" rel="noopener noreferrer"
+              className="btn-glass flex-shrink-0 text-sm px-4 py-2 rounded-xl font-medium text-gray-700">
+              Visit site ↗
             </a>
           )}
-          {product.one_liner && (
-            <p className="text-gray-400 text-sm mt-2 max-w-xl">{product.one_liner}</p>
-          )}
         </div>
-        {product.cta_link && (
-          <a href={product.cta_link} target="_blank" rel="noopener noreferrer"
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded-lg transition-colors">
-            {product.cta_text || 'Visit →'}
-          </a>
-        )}
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 fade-up">
         {[
-          { label: 'Total published', value: s.total_published, color: 'text-white' },
-          { label: 'Last 30 days', value: s.published_last_30d, color: 'text-blue-400' },
-          { label: 'This week', value: s.published_last_7d, color: 'text-emerald-400' },
-          { label: 'Errors', value: s.total_errors, color: 'text-red-400' },
+          { label: 'Total Published', value: s.total, cls: 'text-gray-900' },
+          { label: 'Last 30 Days',    value: s.last30, cls: 'text-blue-600' },
+          { label: 'This Week',       value: s.last7,  cls: 'text-emerald-600' },
+          { label: 'Errors',          value: s.errors, cls: 'text-red-500' },
         ].map((st) => (
-          <div key={st.label} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <p className="text-gray-500 text-xs uppercase tracking-wide">{st.label}</p>
-            <p className={`text-3xl font-bold mt-1 ${st.color}`}>{st.value}</p>
+          <div key={st.label} className="glass rounded-2xl p-4 stat-card">
+            <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">{st.label}</p>
+            <p className={`text-3xl font-display font-semibold mt-1 ${st.cls}`}>{st.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Platforms */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-        <h2 className="text-base font-semibold text-white mb-4">Platforms</h2>
+      {/* Platform breakdown */}
+      <div className="glass rounded-2xl p-5 fade-up">
+        <h2 className="font-display font-semibold text-gray-800 mb-4">Platforms</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {(product.channels || []).map((ch: string) => {
-            const ps = (platformStats || []).find((p: any) => p.platform === ch)
+            const ps = platformMap[ch] || { published: 0, failed: 0 }
             return (
-              <div key={ch} className="bg-gray-800/50 rounded-lg p-3 text-center">
-                <div className="text-2xl mb-1">{PLATFORM_ICONS[ch] || '●'}</div>
-                <p className="text-gray-300 text-sm font-medium capitalize">{ch}</p>
-                <p className="text-emerald-400 text-lg font-bold">{ps?.published_count || 0}</p>
-                <p className="text-gray-500 text-xs">published</p>
-                {ps?.failed_count > 0 && (
-                  <p className="text-red-400 text-xs mt-1">{ps.failed_count} failed</p>
+              <div key={ch} className="glass-hover rounded-xl p-3.5 text-center border border-gray-100/80 bg-white/50">
+                <div className="flex justify-center mb-2">
+                  <PlatformIcon platform={ch} size={28}/>
+                </div>
+                <p className="text-gray-700 text-xs font-semibold capitalize mb-1">{ch}</p>
+                <p className="text-2xl font-display font-semibold text-gray-900">{ps.published}</p>
+                <p className="text-gray-400 text-[11px]">published</p>
+                {ps.failed > 0 && (
+                  <p className="text-red-400 text-[11px] mt-0.5">{ps.failed} failed</p>
                 )}
-                {ps?.last_published_at && (
-                  <p className="text-gray-600 text-xs mt-1">
-                    {formatDistanceToNow(new Date(ps.last_published_at), { addSuffix: true })}
+                {ps.last && (
+                  <p className="text-gray-400 text-[10px] mt-1 truncate">
+                    {formatDistanceToNow(new Date(ps.last), { addSuffix: true })}
                   </p>
                 )}
               </div>
@@ -119,29 +134,32 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </div>
 
       {/* Content plan + Publications */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 fade-up">
 
-        {/* Upcoming content plan */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h2 className="text-base font-semibold text-white mb-4">Content Plan — Upcoming</h2>
-          <div className="space-y-2">
+        {/* Upcoming content */}
+        <div className="glass rounded-2xl p-5">
+          <h2 className="font-display font-semibold text-gray-800 mb-4">Upcoming Content</h2>
+          <div className="space-y-0.5">
             {(plan || []).length === 0 && (
-              <p className="text-gray-500 text-sm text-center py-8">No scheduled content</p>
+              <p className="text-gray-400 text-sm text-center py-10">No scheduled content</p>
             )}
             {(plan || []).map((item: any) => (
-              <div key={item.id} className="flex items-start gap-3 py-2.5 border-b border-gray-800/50 last:border-0">
-                <div className="flex-shrink-0 text-center min-w-[40px]">
-                  <p className="text-white font-bold text-sm">{format(new Date(item.scheduled_for), 'dd')}</p>
-                  <p className="text-gray-500 text-xs">{format(new Date(item.scheduled_for), 'MMM')}</p>
+              <div key={item.id} className="flex items-start gap-3 py-2.5 border-b border-gray-100/80 last:border-0 row-hover rounded-lg px-1">
+                <div className="flex-shrink-0 w-9 text-center">
+                  <p className="text-gray-900 font-display font-semibold text-sm">{format(new Date(item.scheduled_for), 'dd')}</p>
+                  <p className="text-gray-400 text-[10px] uppercase">{format(new Date(item.scheduled_for), 'MMM')}</p>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-200 text-sm truncate">{item.topic}</p>
+                  <p className="text-[13px] text-gray-800 font-medium truncate">{item.topic}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-xs px-1.5 py-0.5 rounded border ${STATUS_COLOR[item.status] || STATUS_COLOR.draft}`}>
-                      {item.status}
-                    </span>
-                    <span className="text-gray-500 text-xs">{item.type}</span>
+                    <span className={`pill ${STATUS_CLS[item.status] || 'pill-gray'}`}>{item.status}</span>
+                    <span className="text-gray-400 text-xs">{item.type}</span>
                   </div>
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  {(item.platforms || []).slice(0, 3).map((p: string) => (
+                    <PlatformIcon key={p} platform={p} size={16}/>
+                  ))}
                 </div>
               </div>
             ))}
@@ -149,49 +167,39 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
 
         {/* Recent publications */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h2 className="text-base font-semibold text-white mb-4">Recent Publications</h2>
-          <div className="space-y-2">
-            {(publications || []).length === 0 && (
-              <p className="text-gray-500 text-sm text-center py-8">No publications yet</p>
+        <div className="glass rounded-2xl p-5">
+          <h2 className="font-display font-semibold text-gray-800 mb-4">Recent Publications</h2>
+          <div className="space-y-0.5">
+            {pubs.length === 0 && (
+              <p className="text-gray-400 text-sm text-center py-10">No publications yet</p>
             )}
-            {(publications || []).map((pub: any) => (
-              <div key={pub.id} className="flex items-start gap-3 py-2.5 border-b border-gray-800/50 last:border-0">
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${
-                  pub.status === 'published' ? 'bg-emerald-500' :
-                  pub.status === 'failed' ? 'bg-red-500' : 'bg-gray-500'
-                }`} />
+            {pubs.map((pub: any) => (
+              <div key={pub.id} className="flex items-start gap-3 py-2.5 border-b border-gray-100/80 last:border-0 row-hover rounded-lg px-1">
+                <PlatformIcon platform={pub.platform} size={20}/>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-200 text-sm truncate">{pub.topic}</p>
+                  <p className="text-[13px] text-gray-800 font-medium truncate">{pub.topic}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-gray-500 text-xs capitalize">{pub.platform}</span>
-                    <span className="text-gray-600 text-xs">·</span>
-                    <span className="text-gray-500 text-xs">{pub.type}</span>
+                    <span className="text-gray-400 text-xs capitalize">{pub.platform}</span>
                     {pub.published_at && (
-                      <>
-                        <span className="text-gray-600 text-xs">·</span>
-                        <span className="text-gray-600 text-xs">
-                          {formatDistanceToNow(new Date(pub.published_at), { addSuffix: true })}
-                        </span>
-                      </>
+                      <span className="text-gray-300 text-xs">· {formatDistanceToNow(new Date(pub.published_at), { addSuffix: true })}</span>
                     )}
                   </div>
                   {pub.error_details && (
                     <p className="text-red-400 text-xs mt-1 truncate">{pub.error_details}</p>
                   )}
                 </div>
+                <span className={`pill flex-shrink-0 ${STATUS_CLS[pub.status] || 'pill-gray'}`}>
+                  {pub.status}
+                </span>
                 {pub.publish_url && (
                   <a href={pub.publish_url} target="_blank" rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-indigo-400 flex-shrink-0">
-                    <span className="text-sm">↗</span>
-                  </a>
+                    className="text-gray-300 hover:text-indigo-500 flex-shrink-0 transition-colors text-sm">↗</a>
                 )}
               </div>
             ))}
           </div>
         </div>
       </div>
-
     </div>
   )
 }
