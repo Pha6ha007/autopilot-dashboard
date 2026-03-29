@@ -2,6 +2,8 @@ import { supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { PlatformIcon } from '@/components/PlatformIcon'
+import { RealtimeRefresher } from '@/components/RealtimeRefresher'
+import { PublicationTrendChart } from '@/components/PublicationTrendChart'
 
 export const revalidate = 60
 
@@ -40,6 +42,23 @@ export default async function DashboardPage() {
 
   const recentPubs = pubs.slice(0, 8)
 
+  // Build 14-day trend
+  const trendMap: Record<string, number> = {}
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000)
+    trendMap[d.toISOString().split('T')[0]] = 0
+  }
+  for (const p of pubs) {
+    if (p.status === 'published' && p.published_at) {
+      const day = p.published_at.split('T')[0]
+      if (day in trendMap) trendMap[day]++
+    }
+  }
+  const trendData = Object.entries(trendMap).map(([date, count]) => ({
+    date: date.slice(5), // MM-DD
+    count,
+  }))
+
   const statsCards = [
     { label: 'Total Published', value: totalPublished, sub: 'all time', gradient: 'from-emerald-400 to-teal-500', bg: 'from-emerald-50 to-teal-50' },
     { label: 'This Week', value: publishedThisWeek, sub: 'last 7 days', gradient: 'from-blue-400 to-indigo-500', bg: 'from-blue-50 to-indigo-50' },
@@ -51,9 +70,19 @@ export default async function DashboardPage() {
     <div className="space-y-8">
 
       {/* Page header */}
-      <div className="fade-up">
-        <h1 className="font-display text-[28px] font-semibold text-gray-900 tracking-tight">Command Center</h1>
-        <p className="text-gray-400 text-sm mt-1">All products · live sync</p>
+      <div className="fade-up flex items-end justify-between">
+        <div>
+          <h1 className="font-display text-[28px] font-semibold text-gray-900 tracking-tight">Command Center</h1>
+          <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">
+            All products ·&nbsp;<RealtimeRefresher />
+          </p>
+        </div>
+        <div className="hidden lg:block">
+          <p className="text-xs text-gray-400 mb-1">Publications — 14 days</p>
+          <div className="w-64">
+            <PublicationTrendChart data={trendData} />
+          </div>
+        </div>
       </div>
 
       {/* Stat cards */}
