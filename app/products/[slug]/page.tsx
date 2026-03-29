@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { formatDistanceToNow, format } from 'date-fns'
 import { PlatformIcon } from '@/components/PlatformIcon'
+import { PublicationRow } from '@/components/PublicationRow'
 
 export const revalidate = 30
 
@@ -169,33 +170,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         {/* Recent publications */}
         <div className="glass rounded-2xl p-5">
           <h2 className="font-display font-semibold text-gray-800 mb-4">Recent Publications</h2>
-          <div className="space-y-0.5">
+          <div className="space-y-0">
             {pubs.length === 0 && (
               <p className="text-gray-400 text-sm text-center py-10">No publications yet</p>
             )}
             {pubs.map((pub: any) => (
-              <div key={pub.id} className="flex items-start gap-3 py-2.5 border-b border-gray-100/80 last:border-0 row-hover rounded-lg px-1">
-                <PlatformIcon platform={pub.platform} size={20}/>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-gray-800 font-medium truncate">{pub.topic}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-gray-400 text-xs capitalize">{pub.platform}</span>
-                    {pub.published_at && (
-                      <span className="text-gray-300 text-xs">· {formatDistanceToNow(new Date(pub.published_at), { addSuffix: true })}</span>
-                    )}
-                  </div>
-                  {pub.error_details && (
-                    <p className="text-red-400 text-xs mt-1 truncate">{pub.error_details}</p>
-                  )}
-                </div>
-                <span className={`pill flex-shrink-0 ${STATUS_CLS[pub.status] || 'pill-gray'}`}>
-                  {pub.status}
-                </span>
-                {pub.publish_url && (
-                  <a href={pub.publish_url} target="_blank" rel="noopener noreferrer"
-                    className="text-gray-300 hover:text-indigo-500 flex-shrink-0 transition-colors text-sm">↗</a>
-                )}
-              </div>
+              <PublicationRow key={pub.id} pub={pub} />
             ))}
           </div>
         </div>

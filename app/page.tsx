@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { PlatformIcon } from '@/components/PlatformIcon'
 import { RealtimeRefresher } from '@/components/RealtimeRefresher'
 import { PublicationTrendChart } from '@/components/PublicationTrendChart'
+import { PublicationRow } from '@/components/PublicationRow'
 
 export const revalidate = 60
 
@@ -170,30 +171,12 @@ export default async function DashboardPage() {
             <h2 className="font-display font-semibold text-gray-800 text-base">Recent Publications</h2>
             <span className="text-xs text-gray-400">{recentPubs.length} items</span>
           </div>
-          <div className="space-y-0.5">
+          <div className="space-y-0">
             {recentPubs.length === 0 && (
               <p className="text-gray-400 text-sm text-center py-10">No publications yet</p>
             )}
             {recentPubs.map((pub: any) => (
-              <div key={pub.id} className="flex items-center gap-3 py-2.5 border-b border-gray-100/80 last:border-0 row-hover rounded-lg px-1">
-                <PlatformIcon platform={pub.platform} size={20}/>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-gray-800 truncate font-medium">{pub.topic}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {pub.product_id}
-                    {pub.published_at && (
-                      <> · {formatDistanceToNow(new Date(pub.published_at), { addSuffix: true })}</>
-                    )}
-                  </p>
-                </div>
-                <span className={`pill flex-shrink-0 ${STATUS_CONFIG[pub.status]?.cls || 'pill-gray'}`}>
-                  {pub.status}
-                </span>
-                {pub.publish_url && (
-                  <a href={pub.publish_url} target="_blank" rel="noopener noreferrer"
-                    className="text-gray-300 hover:text-indigo-500 transition-colors flex-shrink-0 text-sm">↗</a>
-                )}
-              </div>
+              <PublicationRow key={pub.id} pub={pub} />
             ))}
           </div>
         </div>
