@@ -39,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   { href: '/content', label: 'Content Plan' },
                   { href: '/workflows', label: 'Workflows' },
                   { href: '/errors', label: 'Errors' },
+                  { href: '/confide', label: '🎬 Episodes' },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href}
                     className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-gray-900 hover:bg-white/70 transition-all font-medium">
