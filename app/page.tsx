@@ -112,7 +112,7 @@ export default async function DashboardPage() {
 
               {/* Channels */}
               <div className="flex flex-wrap gap-1.5">
-                {(product.channels || []).map((ch) => (
+                {(product.channels || []).map((ch: string) => (
                   <span key={ch} className="bg-gray-800 text-gray-400 text-xs px-2 py-0.5 rounded">
                     {PLATFORM_ICONS[ch] || ch} {ch}
                   </span>
