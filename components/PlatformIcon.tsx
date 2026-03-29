@@ -94,6 +94,41 @@ export function PlatformIcon({ platform, size = 14 }: { platform: string; size?:
         <path d="M12 3.5l8 4-8 4-8-4 8-4zm-8 8l8 4 8-4m-16 4l8 4 8-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinejoin="round"/>
       </svg>
     ),
+    producthunt: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="12" fill="#DA552F"/>
+        <path d="M10 8h3.5a2.5 2.5 0 0 1 0 5H10V8zm0 5h1v3h-1v-3z" fill="none" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M10 8h3.5a2.5 2.5 0 0 1 0 5H10V8z" fill="white"/>
+        <rect x="10" y="13" width="1.5" height="3" fill="white"/>
+      </svg>
+    ),
+    github: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="6" fill="#24292E"/>
+        <path d="M12 4C7.6 4 4 7.6 4 12c0 3.5 2.3 6.5 5.5 7.5.4.1.5-.2.5-.4v-1.4c-2.2.5-2.7-1.1-2.7-1.1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.9.9 2.3.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.2-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.7 7.7 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.5 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.2 0 3.1-1.9 3.8-3.7 4 .3.3.6.8.6 1.6v2.3c0 .2.1.5.5.4A8 8 0 0 0 20 12c0-4.4-3.6-8-8-8z" fill="white"/>
+      </svg>
+    ),
+    hackernews: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="4" fill="#FF6600"/>
+        <text x="5" y="17" fontSize="13" fontWeight="900" fill="white" fontFamily="Verdana, sans-serif">Y</text>
+      </svg>
+    ),
+    indiehackers: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="6" fill="#0E2150"/>
+        <text x="4" y="17" fontSize="11" fontWeight="800" fill="#5BB8FF" fontFamily="monospace">IH</text>
+      </svg>
+    ),
+    googlebusiness: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="5" fill="#fff" stroke="#e0e0e0" strokeWidth="1"/>
+        <path d="M12 11.5h5.5c.1.5.1 1 .1 1.5 0 3-2 5.5-5.6 5.5A5.5 5.5 0 0 1 6.5 13a5.5 5.5 0 0 1 5.5-5.5c1.5 0 2.7.5 3.7 1.4l-1.5 1.5c-.6-.5-1.3-.8-2.2-.8A3.4 3.4 0 0 0 8.6 13a3.4 3.4 0 0 0 3.4 3.4c2.2 0 3-1.5 3.1-2.3H12v-2z" fill="#4285F4"/>
+        <path d="M6.5 13a5.5 5.5 0 0 1 5.5-5.5v2.1A3.4 3.4 0 0 0 8.6 13H6.5z" fill="#34A853"/>
+        <path d="M6.5 13H8.6a3.4 3.4 0 0 0 3.4 3.4v2.1A5.5 5.5 0 0 1 6.5 13z" fill="#FBBC05"/>
+        <path d="M12 18.5v-2.1a3.4 3.4 0 0 0 3.1-2.3H12v-2h5.5c.1.5.1 1 .1 1.5C17.6 16.5 15.3 18.5 12 18.5z" fill="#EA4335"/>
+      </svg>
+    ),
   }
   return icons[platform] || (
     <span className="w-3.5 h-3.5 rounded bg-gray-200 inline-flex items-center justify-center text-[9px] font-bold text-gray-500 uppercase">

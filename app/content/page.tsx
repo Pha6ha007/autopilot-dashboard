@@ -1,6 +1,7 @@
 import { supabaseAdmin as supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { ContentPlanRow } from '@/components/ContentPlanRow'
+import { AddContentButton } from '@/components/AddContentButton'
 
 export const revalidate = 30
 
@@ -25,13 +26,18 @@ export default async function ContentPage() {
   return (
     <div className="space-y-6">
       <div className="fade-up">
-        <h1 className="font-display text-[28px] font-semibold text-gray-900 tracking-tight">Content Plan</h1>
-        <p className="text-gray-400 text-sm mt-1">
-          {scheduled > 0 && <span>{scheduled} scheduled</span>}
-          {generating > 0 && <span className="text-amber-500"> · {generating} generating</span>}
-          {(plan || []).length === 0 && 'No content scheduled'}
-          <span className="text-gray-300"> · click row to expand</span>
-        </p>
+        <div className="flex items-end justify-between">
+          <div>
+            <h1 className="font-display text-[28px] font-semibold text-gray-900 tracking-tight">Content Plan</h1>
+            <p className="text-gray-400 text-sm mt-1">
+              {scheduled > 0 && <span>{scheduled} scheduled</span>}
+              {generating > 0 && <span className="text-amber-500"> · {generating} generating</span>}
+              {(plan || []).length === 0 && 'No content scheduled'}
+              <span className="text-gray-300"> · click row to expand</span>
+            </p>
+          </div>
+          <AddContentButton />
+        </div>
       </div>
 
       <div className="space-y-6 fade-up">
