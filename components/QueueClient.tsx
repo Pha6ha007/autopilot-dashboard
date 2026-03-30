@@ -263,7 +263,9 @@ function AutoPublishTable({ products, onToggle }: {
         {products.map(p => (
           <div key={p.id} className="flex items-center gap-3 px-4 py-3">
             <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
-            <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mr-2">active</span>
+            <span className="text-xs text-gray-400 mr-2">
+              {p.auto_publish ? 'publishes automatically' : 'manual review'}
+            </span>
             <button
               onClick={() => onToggle(p.id, !p.auto_publish)}
               className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${p.auto_publish ? 'bg-indigo-500' : 'bg-gray-200'}`}
