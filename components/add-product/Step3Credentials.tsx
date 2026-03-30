@@ -1,5 +1,6 @@
 'use client'
 import { PlatformIcon } from '@/components/PlatformIcon'
+import { AutoTierBadge } from '@/components/AutoTierBadge'
 import { PLATFORM_BY_ID } from '@/lib/platforms'
 
 type SelectedPlatform = {
@@ -53,6 +54,7 @@ export function Step3Credentials({
             <div className="flex items-center gap-2 mb-1">
               <PlatformIcon platform={sp.platform} size={16} />
               <span className="font-semibold text-gray-800 text-sm">{config.label}</span>
+              <AutoTierBadge platform={sp.platform} size="xs" />
               <span className="ml-auto text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
                 API
               </span>

@@ -1,7 +1,8 @@
 'use client'
 import { PlatformIcon } from '@/components/PlatformIcon'
 import { AutoTierBadge, AutoTierLegend } from '@/components/AutoTierBadge'
-import { PLATFORMS, PLATFORM_GROUPS, PLATFORM_AUTO_TIER, type PlatformConfig } from '@/lib/platforms'
+import { PLATFORMS, PLATFORM_GROUPS, type PlatformConfig } from '@/lib/platforms'
+import { getPlatformType } from '@/lib/platform-types'
 
 type SelectedPlatform = {
   platform: string
@@ -26,7 +27,7 @@ export function Step2Platforms({
     }
   }
 
-  const manualCount = selected.filter(s => PLATFORM_AUTO_TIER[s.platform] === 'manual').length
+  const manualCount = selected.filter(s => getPlatformType(s.platform) === 'manual').length
 
   return (
     <div className="space-y-6">
