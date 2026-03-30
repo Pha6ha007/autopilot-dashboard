@@ -37,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {[
                   { href: '/', label: 'Dashboard' },
                   { href: '/content', label: 'Content Plan' },
+                  { href: '/calendar', label: 'Calendar' },
                   { href: '/drafts', label: 'Drafts' },
                   { href: '/queue', label: 'Queue' },
                   { href: '/workflows', label: 'Workflows' },
