@@ -71,9 +71,10 @@ function QueueRow({
 
   const isPending  = item.status === 'pending'
   const isApproved = item.status === 'approved'
-  const isManual   = item.requires_manual
   const tier       = getPlatformType(item.platform)
   const isSemiAuto = tier === 'semi_auto'
+  // True manual = only platforms with NO api at all (not semi-auto)
+  const isManual   = tier === 'manual'
   const openUrl    = PLATFORM_OPEN_URLS[item.platform]
   const platformLabel = PLATFORM_BY_ID[item.platform]?.label || item.platform
 
