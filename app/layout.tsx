@@ -36,13 +36,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <nav className="flex items-center gap-1">
                 {[
                   { href: '/', label: 'Dashboard' },
-                  { href: '/content', label: 'Content Plan' },
+                  { href: '/content', label: 'Content' },
                   { href: '/calendar', label: 'Calendar' },
                   { href: '/drafts', label: 'Drafts' },
+                  { href: '/templates', label: 'Templates' },
                   { href: '/queue', label: 'Queue' },
                   { href: '/workflows', label: 'Workflows' },
                   { href: '/errors', label: 'Errors' },
-                  { href: '/confide', label: '🎬 Episodes' },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href}
                     className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-gray-900 hover:bg-white/70 transition-all font-medium">
