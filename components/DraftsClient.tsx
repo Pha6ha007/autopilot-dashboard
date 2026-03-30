@@ -61,7 +61,7 @@ export function DraftsClient({ initialDrafts, products }: Props) {
   const [regenId, setRegenId] = useState<string | null>(null)
   const [regenInstructions, setRegenInstructions] = useState('')
   const [loading, setLoading] = useState<Record<string, boolean>>({})
-
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const filtered = drafts.filter(d => {
     if (tab !== 'all' && d.status !== tab) return false
     if (filterProduct && d.product_id !== filterProduct) return false
@@ -186,8 +186,47 @@ export function DraftsClient({ initialDrafts, products }: Props) {
     setItemLoading(d.id, false)
   }, [updateDraft])
 
+  const handleGenerateAI = useCallback(async (d: Draft) => {
+    setItemLoading(d.id, true)
+    const resp = await fetch('/api/generate-image/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        draft_id: d.id,
+        product_id: d.product_id,
+        topic: d.topic || d.content.slice(0, 100),
+        platform: d.platform,
+      }),
+    })
+    if (resp.ok) {
+      const data = await resp.json()
+      updateDraft(d.id, { image_url: data.image_url, image_type: 'ai' })
+    }
+    setItemLoading(d.id, false)
+  }, [updateDraft])
+
   return (
     <div>
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm cursor-zoom-out"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <img
+            src={lightboxUrl}
+            alt="Full size"
+            className="max-w-[90vw] max-h-[90vh] rounded-2xl shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setLightboxUrl(null)}
+            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white text-xl transition-colors"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* Filters */}
       <div className="flex items-center gap-4 mb-6">
         <div className="flex gap-1 glass rounded-xl p-1">
@@ -351,9 +390,10 @@ export function DraftsClient({ initialDrafts, products }: Props) {
                               <img
                                 src={d.image_url}
                                 alt="Post image"
-                                className="w-48 h-auto rounded-lg border border-gray-100 shadow-sm"
+                                onClick={() => setLightboxUrl(d.image_url!)}
+                                className="w-48 h-auto rounded-lg border border-gray-100 shadow-sm cursor-zoom-in hover:shadow-md hover:scale-[1.02] transition-all"
                               />
-                              <div className="flex flex-col gap-1">
+                              <div className="flex flex-col gap-1.5">
                                 <span className="text-[10px] text-gray-400 uppercase tracking-wider">
                                   {d.image_type === 'ai' ? '🎨 AI generated' : '📐 Template'}
                                 </span>
@@ -369,16 +409,32 @@ export function DraftsClient({ initialDrafts, products }: Props) {
                                     </button>
                                   ))}
                                 </div>
+                                <button
+                                  onClick={() => handleGenerateAI(d)}
+                                  disabled={!!loading[d.id]}
+                                  className="text-[10px] px-2 py-0.5 rounded border border-violet-200 text-violet-500 hover:border-violet-400 hover:text-violet-700 disabled:opacity-50 w-fit"
+                                >
+                                  {loading[d.id] ? '⏳ Generating…' : '🎨 AI image (Flux)'}
+                                </button>
                               </div>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => handleGenerateImage(d)}
-                              disabled={!!loading[d.id]}
-                              className="text-xs text-indigo-500 hover:text-indigo-700 font-medium disabled:opacity-50"
-                            >
-                              🖼️ Generate image
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleGenerateImage(d)}
+                                disabled={!!loading[d.id]}
+                                className="text-xs text-indigo-500 hover:text-indigo-700 font-medium disabled:opacity-50"
+                              >
+                                🖼️ Template image
+                              </button>
+                              <button
+                                onClick={() => handleGenerateAI(d)}
+                                disabled={!!loading[d.id]}
+                                className="text-xs text-violet-500 hover:text-violet-700 font-medium disabled:opacity-50"
+                              >
+                                {loading[d.id] ? '⏳…' : '🎨 AI image'}
+                              </button>
+                            </div>
                           )}
                         </div>
                       )}
