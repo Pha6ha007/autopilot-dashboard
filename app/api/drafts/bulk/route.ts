@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getPlatformType } from '@/lib/platform-types'
 
 // POST /api/drafts/bulk — bulk approve/reject by topic or IDs
 export async function POST(req: NextRequest) {
@@ -26,7 +27,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Provide ids[] or topic+product_id' }, { status: 400 })
   }
 
-  const { data, error, count } = await query.select()
+  const { data, error } = await query.select()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Auto-queue approved items to content_queue
+  if (action === 'approve' && data) {
+    const queueRows = data.map(d => ({
+      product_id: d.product_id,
+      platform: d.platform,
+      content: d.content,
+      status: 'approved',
+      requires_manual: getPlatformType(d.platform) === 'manual',
+      auto_published: false,
+      scheduled_for: new Date().toISOString(),
+    }))
+
+    if (queueRows.length > 0) {
+      await supabaseAdmin.from('content_queue').insert(queueRows)
+    }
+  }
+
   return NextResponse.json({ ok: true, updated: data?.length || 0, items: data })
 }

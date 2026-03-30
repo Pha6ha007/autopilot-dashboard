@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getPlatformType } from '@/lib/platform-types'
 
 // PATCH /api/drafts/[id] — update draft (edit content, approve, reject)
 export async function PATCH(
@@ -58,6 +59,23 @@ export async function PATCH(
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Auto-queue to content_queue when approved
+  if (body.status === 'approved' && data) {
+    const tier = getPlatformType(data.platform)
+    await supabaseAdmin
+      .from('content_queue')
+      .insert({
+        product_id: data.product_id,
+        platform: data.platform,
+        content: data.content,
+        status: 'approved',
+        requires_manual: tier === 'manual',
+        auto_published: false,
+        scheduled_for: new Date().toISOString(),
+      })
+  }
+
   return NextResponse.json({ ok: true, draft: data })
 }
 
