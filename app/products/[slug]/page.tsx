@@ -5,6 +5,7 @@ import { formatDistanceToNow, format } from 'date-fns'
 import { PlatformIcon } from '@/components/PlatformIcon'
 import { AutoTierBadge } from '@/components/AutoTierBadge'
 import { PublicationRow } from '@/components/PublicationRow'
+import { ProductContextEditor } from '@/components/ProductContextEditor'
 
 export const revalidate = 30
 
@@ -136,6 +137,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             )
           })}
         </div>
+      </div>
+
+      {/* Product Context */}
+      <div className="glass rounded-2xl p-5 fade-up">
+        <h2 className="font-display font-semibold text-gray-800 mb-4">Product Context</h2>
+        <p className="text-xs text-gray-400 mb-4">Content knowledge — used by AI to generate platform-specific posts and articles</p>
+        <ProductContextEditor productId={slug} />
       </div>
 
       {/* Content plan + Publications */}

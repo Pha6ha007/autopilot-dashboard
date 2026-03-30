@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Step1ProductInfo } from '@/components/add-product/Step1ProductInfo'
+import { StepProductContext, EMPTY_CONTEXT, type ProductContextData } from '@/components/add-product/StepProductContext'
 import { Step2Platforms } from '@/components/add-product/Step2Platforms'
 import { Step3Credentials } from '@/components/add-product/Step3Credentials'
 import { Step4Success } from '@/components/add-product/Step4Success'
@@ -24,9 +25,10 @@ type Step1Data = {
 }
 
 const STEPS = [
-  { n: 1, label: 'Product info' },
-  { n: 2, label: 'Platforms' },
-  { n: 3, label: 'Credentials' },
+  { n: 1, label: 'Info' },
+  { n: 2, label: 'Product context' },
+  { n: 3, label: 'Platforms' },
+  { n: 4, label: 'Credentials' },
 ]
 
 export default function AddProductPage() {
@@ -45,7 +47,27 @@ export default function AddProductPage() {
     content_types: 'both', frequency: 'daily',
   })
 
+  const [context, setContext] = useState<ProductContextData>(EMPTY_CONTEXT)
   const [selectedPlatforms, setSelectedPlatforms] = useState<SelectedPlatform[]>([])
+
+  function handleContextFetched(extracted: Record<string, unknown>, rawScrape: string) {
+    setContext({
+      positioning: (extracted.positioning as string) || '',
+      target_audience: (extracted.target_audience as string) || '',
+      pain_points: (extracted.pain_points as string) || '',
+      key_features: Array.isArray(extracted.key_features)
+        ? extracted.key_features.map((f: { name?: string; description?: string }) => ({
+            name: f.name || '', description: f.description || ''
+          }))
+        : [],
+      competitors: (extracted.competitors as string) || '',
+      differentiators: (extracted.differentiators as string) || '',
+      cta: (extracted.cta as string) || '',
+      tone_per_platform: (extracted.tone_per_platform as Record<string, string>) || {},
+      github_repo: context.github_repo,
+      raw_scrape: rawScrape,
+    })
+  }
 
   function validateStep1() {
     if (!product.name.trim()) return 'Product name is required'
@@ -55,20 +77,21 @@ export default function AddProductPage() {
   }
 
   function validateStep2() {
+    if (!context.positioning.trim()) return 'Positioning is required — describe what the product does'
+    if (!context.target_audience.trim()) return 'Target audience is required'
+    return null
+  }
+
+  function validateStep3() {
     if (selectedPlatforms.length === 0) return 'Select at least one platform'
     return null
   }
 
   function next() {
     setError('')
-    if (step === 1) {
-      const err = validateStep1()
-      if (err) { setError(err); return }
-    }
-    if (step === 2) {
-      const err = validateStep2()
-      if (err) { setError(err); return }
-    }
+    if (step === 1) { const err = validateStep1(); if (err) { setError(err); return } }
+    if (step === 2) { const err = validateStep2(); if (err) { setError(err); return } }
+    if (step === 3) { const err = validateStep3(); if (err) { setError(err); return } }
     setStep(s => s + 1)
   }
 
@@ -81,6 +104,7 @@ export default function AddProductPage() {
     setError('')
     setLoading(true)
     try {
+      // Save product + platforms
       const resp = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -91,15 +115,24 @@ export default function AddProductPage() {
         setError(data.error || 'Failed to save product')
         return
       }
+
+      // Save product context
+      await fetch(`/api/products/${data.product.id}/context`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...context,
+          website_url: product.domain.startsWith('http') ? product.domain : `https://${product.domain}`,
+        }),
+      })
+
       setSuccess({
         product: { id: data.product.id, name: data.product.name, domain: data.product.site || data.product.domain || '' },
         platforms: data.platforms.map((p: { platform: string; status: string; subreddits: string[] }) => ({
-          platform:   p.platform,
-          status:     p.status,
-          subreddits: p.subreddits,
+          platform: p.platform, status: p.status, subreddits: p.subreddits,
         })),
       })
-      setStep(4)
+      setStep(5) // success step
     } catch (e) {
       setError(String(e))
     } finally {
@@ -131,7 +164,7 @@ export default function AddProductPage() {
         </div>
 
         {/* Step indicator */}
-        {step < 4 && (
+        {step <= 4 && (
           <div className="flex items-center gap-0 mb-8">
             {STEPS.map((s, i) => (
               <div key={s.n} className="flex items-center">
@@ -161,21 +194,28 @@ export default function AddProductPage() {
         <div className="glass rounded-2xl shadow-xl shadow-indigo-100/30 overflow-hidden">
           <div className="p-6 md:p-8">
             {step === 1 && (
-              <Step1ProductInfo data={product} onChange={setProduct} />
+              <Step1ProductInfo
+                data={product}
+                onChange={setProduct}
+                onContextFetched={handleContextFetched}
+              />
             )}
             {step === 2 && (
-              <Step2Platforms selected={selectedPlatforms} onChange={setSelectedPlatforms} />
+              <StepProductContext data={context} onChange={setContext} />
             )}
             {step === 3 && (
+              <Step2Platforms selected={selectedPlatforms} onChange={setSelectedPlatforms} />
+            )}
+            {step === 4 && (
               <Step3Credentials selected={selectedPlatforms} onChange={setSelectedPlatforms} />
             )}
-            {step === 4 && success && (
+            {step === 5 && success && (
               <Step4Success summary={success} />
             )}
           </div>
 
           {/* Footer nav */}
-          {step < 4 && (
+          {step <= 4 && (
             <div className="border-t border-white/30 px-6 md:px-8 py-4 flex items-center justify-between bg-white/30">
               <div>
                 {error && (
@@ -194,7 +234,7 @@ export default function AddProductPage() {
                     ← Back
                   </button>
                 )}
-                {step < 3 ? (
+                {step < 4 ? (
                   <button
                     type="button"
                     onClick={next}
@@ -217,7 +257,7 @@ export default function AddProductPage() {
           )}
 
           {/* Success footer */}
-          {step === 4 && (
+          {step === 5 && (
             <div className="border-t border-white/30 px-6 md:px-8 py-4 flex items-center justify-between bg-white/30">
               <button
                 type="button"
