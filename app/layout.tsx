@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { DM_Sans, Instrument_Sans } from 'next/font/google'
 import Link from 'next/link'
+import { NotificationBell } from '@/components/NotificationBell'
 import './globals.css'
 
 const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-body', weight: ['300','400','500','600'] })
@@ -50,8 +51,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     {label}
                   </Link>
                 ))}
+                <NotificationBell />
                 <Link href="/products/new"
-                  className="ml-2 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors shadow-md shadow-indigo-100">
+                  className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors shadow-md shadow-indigo-100">
                   <span className="text-base leading-none">+</span>
                   Product
                 </Link>
