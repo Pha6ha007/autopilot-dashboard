@@ -6,6 +6,8 @@ export function ProductActions({ product }: {
 }) {
   const [paused, setPaused] = useState(product.paused || false)
   const [loading, setLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState('')
 
   const togglePause = useCallback(async () => {
     setLoading(true)
@@ -18,8 +20,18 @@ export function ProductActions({ product }: {
     setLoading(false)
   }, [product.id, paused])
 
+  const syncPlatforms = useCallback(async () => {
+    setSyncing(true)
+    setSyncResult('')
+    const resp = await fetch(`/api/products/${product.id}/sync-platforms`, { method: 'POST' })
+    const data = await resp.json()
+    setSyncResult(data.message || 'Done')
+    setSyncing(false)
+    setTimeout(() => setSyncResult(''), 5000)
+  }, [product.id])
+
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <button
         onClick={togglePause}
         disabled={loading}
@@ -31,10 +43,22 @@ export function ProductActions({ product }: {
       >
         {loading ? '…' : paused ? '▶ Resume' : '⏸ Pause'}
       </button>
+
+      <button
+        onClick={syncPlatforms}
+        disabled={syncing}
+        className="px-3 py-1.5 rounded-xl text-sm font-medium transition-all border bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 disabled:opacity-50"
+      >
+        {syncing ? '⏳ Syncing…' : '🔄 Sync platforms'}
+      </button>
+
       {paused && (
         <span className="text-xs text-amber-500 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
           paused — no content will be generated
         </span>
+      )}
+      {syncResult && (
+        <span className="text-xs text-blue-500">{syncResult}</span>
       )}
     </div>
   )
