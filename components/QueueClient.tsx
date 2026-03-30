@@ -1,7 +1,8 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { PlatformIcon } from '@/components/PlatformIcon'
-import { PLATFORM_BY_ID } from '@/lib/platforms'
+import { AutoTierBadge } from '@/components/AutoTierBadge'
+import { PLATFORM_BY_ID, PLATFORM_AUTO_TIER } from '@/lib/platforms'
 
 type QueueItem = {
   id: string
@@ -66,11 +67,12 @@ function QueueRow({
       >
         {/* Platform / Product label */}
         {showPlatform && (
-          <div className="flex items-center gap-1.5 w-32 flex-shrink-0">
+          <div className="flex items-center gap-1.5 w-36 flex-shrink-0">
             <PlatformIcon platform={item.platform} size={14} />
             <span className="text-sm text-gray-600 truncate capitalize">
               {PLATFORM_BY_ID[item.platform]?.label || item.platform}
             </span>
+            <AutoTierBadge platform={item.platform} size="xs" />
           </div>
         )}
         {showProduct && (
@@ -208,12 +210,25 @@ function GroupSection({
   groupMode: GroupMode
   onAction: (id: string, action: 'approve' | 'reject' | 'mark_published') => void
 }) {
+  // For platform grouping — show tier badge next to title
+  const platformId = groupMode === 'platform' ? items[0]?.platform : null
+  // Determine section type label
+  const allManual = items.every(i => i.requires_manual)
+  const allAuto   = items.every(i => !i.requires_manual)
+  const sectionLabel = allManual ? 'Manual only' : allAuto ? 'Auto-published' : 'Pending approval'
+
   return (
     <div className="glass rounded-2xl overflow-hidden shadow-sm">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-white/40 bg-white/20">
         {icon}
         <span className="font-semibold text-gray-800 text-sm">{title}</span>
         <span className="ml-1 text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{count}</span>
+        {/* Tier badge for platform grouping */}
+        {platformId && (
+          <AutoTierBadge platform={platformId} size="xs" />
+        )}
+        {/* Section type label */}
+        <span className="ml-auto text-xs text-gray-400">{sectionLabel}</span>
       </div>
       {items.map(item => (
         <QueueRow

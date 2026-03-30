@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { formatDistanceToNow, format } from 'date-fns'
 import { PlatformIcon } from '@/components/PlatformIcon'
+import { AutoTierBadge } from '@/components/AutoTierBadge'
 import { PublicationRow } from '@/components/PublicationRow'
 
 export const revalidate = 30
@@ -117,7 +118,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <div className="flex justify-center mb-2">
                   <PlatformIcon platform={ch} size={28}/>
                 </div>
-                <p className="text-gray-700 text-xs font-semibold capitalize mb-1">{ch}</p>
+                <p className="text-gray-700 text-xs font-semibold capitalize mb-1.5">{ch}</p>
+                <div className="flex justify-center mb-2">
+                  <AutoTierBadge platform={ch} size="xs" />
+                </div>
                 <p className="text-2xl font-display font-semibold text-gray-900">{ps.published}</p>
                 <p className="text-gray-400 text-[11px]">published</p>
                 {ps.failed > 0 && (

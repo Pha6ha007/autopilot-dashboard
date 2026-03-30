@@ -7,6 +7,58 @@ export type CredentialField = {
   hint?: string
 }
 
+// Automation tier for a platform
+export type AutoTier = 'auto' | 'semi' | 'manual'
+
+export const PLATFORM_AUTO_TIER: Record<string, AutoTier> = {
+  // ✅ Auto — full API, publishes without human touch
+  telegram:       'auto',
+  linkedin:       'auto',
+  devto:          'auto',
+  hashnode:       'auto',
+  medium:         'auto',
+  github:         'auto',
+  // ⚠️ Semi-auto — API exists but rate limits / setup complexity / approval flows
+  twitter:        'semi',
+  buffer:         'semi',
+  facebook:       'semi',
+  instagram:      'semi',
+  youtube:        'semi',
+  googlebusiness: 'semi',
+  // ✋ Manual — no public posting API, must post by hand
+  reddit:         'manual',
+  producthunt:    'manual',
+  hackernews:     'manual',
+  indiehackers:   'manual',
+  tiktok:         'manual',
+}
+
+export const AUTO_TIER_META: Record<AutoTier, {
+  label: string
+  emoji: string
+  badge: string          // Tailwind classes for badge
+  tooltip: string
+}> = {
+  auto: {
+    label:   'Auto',
+    emoji:   '✅',
+    badge:   'bg-emerald-50 text-emerald-700 border border-emerald-200',
+    tooltip: 'Publishes automatically via API. No action required.',
+  },
+  semi: {
+    label:   'Semi-auto',
+    emoji:   '⚠️',
+    badge:   'bg-amber-50 text-amber-700 border border-amber-200',
+    tooltip: 'Can publish via API but has rate limits or requires careful setup. Manual approval recommended.',
+  },
+  manual: {
+    label:   'Manual',
+    emoji:   '✋',
+    badge:   'bg-gray-100 text-gray-500 border border-gray-200',
+    tooltip: 'No publishing API available. Content appears in Manual Queue — copy and post yourself.',
+  },
+}
+
 export type PlatformConfig = {
   id: string
   label: string
