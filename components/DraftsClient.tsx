@@ -414,7 +414,7 @@ export function DraftsClient({ initialDrafts, products }: Props) {
                                   disabled={!!loading[d.id]}
                                   className="text-[10px] px-2 py-0.5 rounded border border-violet-200 text-violet-500 hover:border-violet-400 hover:text-violet-700 disabled:opacity-50 w-fit"
                                 >
-                                  {loading[d.id] ? '⏳ Generating…' : '🎨 AI image (Flux)'}
+                                  {loading[d.id] ? '⏳ Generating…' : '🎨 AI image'}
                                 </button>
                               </div>
                             </div>
