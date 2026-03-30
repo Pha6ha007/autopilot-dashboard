@@ -10,6 +10,8 @@ type Draft = {
   content: string
   content_html?: string
   topic?: string
+  image_url?: string
+  image_type?: string
   template?: string
   status: string
   generation_model?: string
@@ -160,6 +162,29 @@ export function DraftsClient({ initialDrafts, products }: Props) {
     }
     setLoading(prev => Object.fromEntries(ids.map(id => [id, false])))
   }, [drafts, updateDraft])
+
+  const TEMPLATES = ['minimal', 'bold', 'gradient', 'quote'] as const
+
+  const handleGenerateImage = useCallback(async (d: Draft, template: string = 'minimal') => {
+    setItemLoading(d.id, true)
+    const format = ['instagram', 'tiktok'].includes(d.platform) ? 'instagram' : 'og'
+    const resp = await fetch('/api/generate-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        draft_id: d.id,
+        product_id: d.product_id,
+        topic: d.topic || d.content.slice(0, 80),
+        template,
+        format,
+      }),
+    })
+    if (resp.ok) {
+      const data = await resp.json()
+      updateDraft(d.id, { image_url: data.image_url, image_type: 'template' })
+    }
+    setItemLoading(d.id, false)
+  }, [updateDraft])
 
   return (
     <div>
@@ -315,6 +340,46 @@ export function DraftsClient({ initialDrafts, products }: Props) {
                           >
                             ✕
                           </button>
+                        </div>
+                      )}
+
+                      {/* Image preview + generate */}
+                      {!isEditing && (
+                        <div className="mt-2">
+                          {d.image_url ? (
+                            <div className="flex items-start gap-3">
+                              <img
+                                src={d.image_url}
+                                alt="Post image"
+                                className="w-48 h-auto rounded-lg border border-gray-100 shadow-sm"
+                              />
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[10px] text-gray-400 uppercase tracking-wider">
+                                  {d.image_type === 'ai' ? '🎨 AI generated' : '📐 Template'}
+                                </span>
+                                <div className="flex flex-wrap gap-1">
+                                  {TEMPLATES.map(t => (
+                                    <button
+                                      key={t}
+                                      onClick={() => handleGenerateImage(d, t)}
+                                      disabled={!!loading[d.id]}
+                                      className="text-[10px] px-2 py-0.5 rounded border border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-50 capitalize"
+                                    >
+                                      {t}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleGenerateImage(d)}
+                              disabled={!!loading[d.id]}
+                              className="text-xs text-indigo-500 hover:text-indigo-700 font-medium disabled:opacity-50"
+                            >
+                              🖼️ Generate image
+                            </button>
+                          )}
                         </div>
                       )}
 
