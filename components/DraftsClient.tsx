@@ -164,6 +164,14 @@ export function DraftsClient({ initialDrafts, products }: Props) {
   }, [drafts, updateDraft])
 
   const TEMPLATES = ['minimal', 'bold', 'gradient', 'quote'] as const
+  const AI_STYLES = [
+    { id: 'cinematic', name: '🎬 Cinematic' },
+    { id: '3d-render', name: '🧊 3D' },
+    { id: 'editorial', name: '📰 Editorial' },
+    { id: 'gradient', name: '🌈 Abstract' },
+    { id: 'illustration', name: '✏️ Illustration' },
+    { id: 'noir', name: '🖤 Noir' },
+  ] as const
 
   const handleGenerateImage = useCallback(async (d: Draft, template: string = 'minimal') => {
     setItemLoading(d.id, true)
@@ -186,7 +194,7 @@ export function DraftsClient({ initialDrafts, products }: Props) {
     setItemLoading(d.id, false)
   }, [updateDraft])
 
-  const handleGenerateAI = useCallback(async (d: Draft) => {
+  const handleGenerateAI = useCallback(async (d: Draft, style?: string) => {
     setItemLoading(d.id, true)
     const resp = await fetch('/api/generate-image/ai', {
       method: 'POST',
@@ -196,6 +204,7 @@ export function DraftsClient({ initialDrafts, products }: Props) {
         product_id: d.product_id,
         topic: d.topic || d.content.slice(0, 100),
         platform: d.platform,
+        style: style || 'cinematic',
       }),
     })
     if (resp.ok) {
@@ -395,44 +404,56 @@ export function DraftsClient({ initialDrafts, products }: Props) {
                               />
                               <div className="flex flex-col gap-1.5">
                                 <span className="text-[10px] text-gray-400 uppercase tracking-wider">
-                                  {d.image_type === 'ai' ? '🎨 AI generated' : '📐 Template'}
+                                  {d.image_type === 'ai' ? '🎨 AI generated' : '📐 Template'} · click to enlarge
                                 </span>
+                                <p className="text-[10px] text-gray-400 mb-0.5">AI styles:</p>
                                 <div className="flex flex-wrap gap-1">
-                                  {TEMPLATES.map(t => (
+                                  {AI_STYLES.map(s => (
                                     <button
-                                      key={t}
-                                      onClick={() => handleGenerateImage(d, t)}
+                                      key={s.id}
+                                      onClick={() => handleGenerateAI(d, s.id)}
                                       disabled={!!loading[d.id]}
-                                      className="text-[10px] px-2 py-0.5 rounded border border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-50 capitalize"
+                                      className="text-[10px] px-2 py-0.5 rounded border border-violet-200 text-violet-500 hover:border-violet-400 hover:text-violet-700 hover:bg-violet-50 disabled:opacity-50"
                                     >
-                                      {t}
+                                      {loading[d.id] ? '⏳' : s.name}
                                     </button>
                                   ))}
                                 </div>
-                                <button
-                                  onClick={() => handleGenerateAI(d)}
-                                  disabled={!!loading[d.id]}
-                                  className="text-[10px] px-2 py-0.5 rounded border border-violet-200 text-violet-500 hover:border-violet-400 hover:text-violet-700 disabled:opacity-50 w-fit"
-                                >
-                                  {loading[d.id] ? '⏳ Generating…' : '🎨 AI image'}
-                                </button>
+                                <details className="mt-1">
+                                  <summary className="text-[10px] text-gray-300 cursor-pointer hover:text-gray-500">Text templates (free)</summary>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {TEMPLATES.map(t => (
+                                      <button
+                                        key={t}
+                                        onClick={() => handleGenerateImage(d, t)}
+                                        disabled={!!loading[d.id]}
+                                        className="text-[10px] px-2 py-0.5 rounded border border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600 disabled:opacity-50 capitalize"
+                                      >
+                                        {t}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </details>
                               </div>
                             </div>
                           ) : (
-                            <div className="flex gap-2">
+                            <div className="flex items-center gap-2">
+                              {AI_STYLES.slice(0, 3).map(s => (
+                                <button
+                                  key={s.id}
+                                  onClick={() => handleGenerateAI(d, s.id)}
+                                  disabled={!!loading[d.id]}
+                                  className="text-[11px] px-2.5 py-1 rounded-lg border border-violet-200 text-violet-500 hover:border-violet-400 hover:bg-violet-50 disabled:opacity-50"
+                                >
+                                  {loading[d.id] ? '⏳ Generating…' : `${s.name}`}
+                                </button>
+                              ))}
                               <button
                                 onClick={() => handleGenerateImage(d)}
                                 disabled={!!loading[d.id]}
-                                className="text-xs text-indigo-500 hover:text-indigo-700 font-medium disabled:opacity-50"
+                                className="text-[11px] px-2.5 py-1 rounded-lg border border-gray-200 text-gray-400 hover:text-gray-600 disabled:opacity-50"
                               >
-                                🖼️ Template image
-                              </button>
-                              <button
-                                onClick={() => handleGenerateAI(d)}
-                                disabled={!!loading[d.id]}
-                                className="text-xs text-violet-500 hover:text-violet-700 font-medium disabled:opacity-50"
-                              >
-                                {loading[d.id] ? '⏳…' : '🎨 AI image'}
+                                📐 Template (free)
                               </button>
                             </div>
                           )}
