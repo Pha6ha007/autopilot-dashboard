@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { AnalyticsClient } from '@/components/AnalyticsClient'
+import { AddMetricsForm } from '@/components/AddMetricsForm'
 
 export const revalidate = 30
 
@@ -25,9 +26,15 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display font-bold text-gray-900 text-3xl">Analytics</h1>
-        <p className="text-gray-500 text-sm mt-1">Content performance across products and platforms</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-display font-bold text-gray-900 text-3xl">Analytics</h1>
+          <p className="text-gray-500 text-sm mt-1">Content performance across products and platforms</p>
+        </div>
+        <AddMetricsForm
+          products={(products || []).map(p => ({ id: p.id, name: p.name }))}
+          publications={(publications || []).map(p => ({ id: p.id, product_id: p.product_id, platform: p.platform, title: p.title }))}
+        />
       </div>
       <AnalyticsClient
         metrics={metrics || []}
