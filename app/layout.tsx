@@ -44,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   { href: '/queue', label: 'Queue' },
                   { href: '/workflows', label: 'Workflows' },
                   { href: '/analytics', label: 'Analytics' },
+                  { href: '/setup', label: 'Setup' },
                   { href: '/errors', label: 'Errors' },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href}
