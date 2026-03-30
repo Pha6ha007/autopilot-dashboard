@@ -1,7 +1,17 @@
 import { supabaseAdmin as supabase } from '@/lib/supabase'
 import { WorkflowRunRow } from '@/components/WorkflowRunRow'
+import { WorkflowControls } from '@/components/WorkflowControls'
 
 export const revalidate = 30
+
+const WORKFLOWS = [
+  { id: 'wJoMEpwo5DOgGmdO', name: 'WF-1 · Article Generator', schedule: 'Daily 08:00' },
+  { id: 'XdtMuAQzsDGbnBVA', name: 'WF-2 · Social Posts', schedule: 'Daily 09:00' },
+  { id: 'SstOEPouuBPdK8eD', name: 'WF-3 · YouTube Script', schedule: 'Manual' },
+  { id: 'VYghYIeIc07GgIhL', name: 'WF-4 · Mention Monitor', schedule: 'Every 6h' },
+  { id: '8VElhe3mDZqTQNct', name: 'WF-9 · Content Planner', schedule: 'Sunday 18:00' },
+  { id: 'j2QxnCrdOeFBJL64', name: 'WF-10 · Process Queue', schedule: 'Every 15m' },
+]
 
 export default async function WorkflowsPage() {
   const { data: runs } = await supabase
@@ -24,6 +34,9 @@ export default async function WorkflowsPage() {
           <span className="text-gray-300"> · click row to expand</span>
         </p>
       </div>
+
+      {/* Workflow Controls */}
+      <WorkflowControls workflows={WORKFLOWS} />
 
       <div className="glass rounded-2xl overflow-hidden fade-up">
         <table className="w-full text-sm">

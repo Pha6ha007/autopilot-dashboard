@@ -6,6 +6,7 @@ import { PlatformIcon } from '@/components/PlatformIcon'
 import { AutoTierBadge } from '@/components/AutoTierBadge'
 import { PublicationRow } from '@/components/PublicationRow'
 import { ProductContextEditor } from '@/components/ProductContextEditor'
+import { ProductActions } from '@/components/ProductActions'
 
 export const revalidate = 30
 
@@ -91,6 +92,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </a>
           )}
         </div>
+        <ProductActions product={{ id: product.id, name: product.name, paused: product.paused, archived: product.archived }} />
       </div>
 
       {/* Stats */}
