@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { selectModel, callLLM } from '@/lib/llm'
 
 const EXTRACT_PROMPT = `You are a product analyst. Given the text content of a product website, extract structured product information.
 
@@ -25,7 +26,6 @@ export async function POST(req: NextRequest) {
   if (!url) return NextResponse.json({ error: 'url is required' }, { status: 400 })
 
   const apiKey = process.env.OPENROUTER_API_KEY
-  const model = process.env.MODEL_COMPLEX || 'minimax/minimax-m2.5'
   if (!apiKey) return NextResponse.json({ error: 'OPENROUTER_API_KEY not configured' }, { status: 500 })
 
   // Step 1: Scrape site via Jina Reader
@@ -37,48 +37,34 @@ export async function POST(req: NextRequest) {
     })
     if (!resp.ok) throw new Error(`Jina returned ${resp.status}`)
     siteText = await resp.text()
-    // Trim to ~12k chars to fit in context
     if (siteText.length > 12000) siteText = siteText.slice(0, 12000) + '\n...[truncated]'
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
     return NextResponse.json({ error: `Failed to scrape site: ${msg}` }, { status: 502 })
   }
 
-  // Step 2: Extract via LLM
+  // Step 2: Extract via LLM (uses MODEL_SIMPLE — extraction, not creative)
   try {
-    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 4096,
-        messages: [
-          { role: 'system', content: EXTRACT_PROMPT },
-          { role: 'user', content: `Website URL: ${url}\n\n---\n\n${siteText}` },
-        ],
-      }),
-      signal: AbortSignal.timeout(60000),
+    const model = selectModel('scrape')
+    const result = await callLLM({
+      model,
+      maxTokens: 4096,
+      messages: [
+        { role: 'system', content: EXTRACT_PROMPT },
+        { role: 'user', content: `Website URL: ${url}\n\n---\n\n${siteText}` },
+      ],
     })
 
-    if (!resp.ok) {
-      const errBody = await resp.text()
-      throw new Error(`OpenRouter ${resp.status}: ${errBody.slice(0, 200)}`)
-    }
-
-    const data = await resp.json()
-    const content = data.choices?.[0]?.message?.content || ''
-
-    // Parse JSON from response (strip markdown fences if present)
-    const jsonStr = content.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim()
+    // Parse JSON from response
+    const jsonStr = result.content.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim()
     const extracted = JSON.parse(jsonStr)
 
     return NextResponse.json({
       ok: true,
       extracted,
-      raw_scrape: siteText.slice(0, 5000), // store truncated version
+      model: result.model,
+      fallback: result.fallback,
+      raw_scrape: siteText.slice(0, 5000),
     })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)

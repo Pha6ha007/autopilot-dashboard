@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { selectModel, callLLM } from '@/lib/llm'
 
 // POST /api/drafts/[id]/regenerate — regenerate content via LLM
 export async function POST(
@@ -8,11 +9,7 @@ export async function POST(
 ) {
   const { id } = await params
   const body = await req.json().catch(() => ({}))
-  const instructions = body.instructions || '' // optional: "make it shorter", "more technical"
-
-  const apiKey = process.env.OPENROUTER_API_KEY
-  const model = process.env.MODEL_COMPLEX || 'minimax/minimax-m2.5'
-  if (!apiKey) return NextResponse.json({ error: 'OPENROUTER_API_KEY not configured' }, { status: 500 })
+  const instructions = body.instructions || ''
 
   // Get current draft + product context
   const { data: draft, error: draftErr } = await supabaseAdmin
@@ -73,28 +70,18 @@ ${instructions ? `Special instructions: ${instructions}` : ''}
 Write ONLY the post text. No JSON, no explanations, no markdown fences.`
 
   try {
-    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 2048,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Topic: ${draft.topic}\n\nPrevious version (improve on this):\n${draft.content}` },
-        ],
-      }),
-      signal: AbortSignal.timeout(60000),
+    // Select model based on platform: short platforms → MODEL_SIMPLE, long → MODEL_COMPLEX
+    const model = selectModel('regenerate', draft.platform)
+    const result = await callLLM({
+      model,
+      maxTokens: 2048,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Topic: ${draft.topic}\n\nPrevious version (improve on this):\n${draft.content}` },
+      ],
     })
 
-    if (!resp.ok) throw new Error(`OpenRouter ${resp.status}`)
-    const data = await resp.json()
-    const newContent = data.choices?.[0]?.message?.content?.trim() || ''
-
-    if (!newContent) throw new Error('Empty response from LLM')
+    if (!result.content) throw new Error('Empty response from LLM')
 
     // Save edit history + new content
     const history = Array.isArray(draft.edit_history) ? draft.edit_history : []
@@ -103,15 +90,16 @@ Write ONLY the post text. No JSON, no explanations, no markdown fences.`
       previous_content: draft.content,
       regenerated: true,
       instructions: instructions || null,
+      model: result.model,
     })
 
     const { data: updated, error: updateErr } = await supabaseAdmin
       .from('generated_content')
       .update({
-        content: newContent,
+        content: result.content,
         status: 'draft',
         edit_history: history,
-        generation_model: model,
+        generation_model: result.model,
       })
       .eq('id', id)
       .select()
