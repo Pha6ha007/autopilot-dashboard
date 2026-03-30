@@ -268,9 +268,9 @@ function AutoPublishTable({ products, onToggle }: {
             </span>
             <button
               onClick={() => onToggle(p.id, !p.auto_publish)}
-              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${p.auto_publish ? 'bg-indigo-500' : 'bg-gray-200'}`}
+              className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors flex-shrink-0 ${p.auto_publish ? 'bg-indigo-500' : 'bg-gray-200'}`}
             >
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${p.auto_publish ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              <span className={`inline-block w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${p.auto_publish ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} />
             </button>
           </div>
         ))}
