@@ -36,20 +36,25 @@ export function QuickPost({ productId, productName, platform, chatId, channelUse
   const generateContent = useCallback(async () => {
     if (!topic.trim()) return
     setGenerating(true)
+    setResult('')
     try {
       const resp = await fetch('/api/quick-post/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product_id: productId, platform, topic, content_size: effectiveSize }),
       })
-      if (resp.ok) {
-        const data = await resp.json()
+      const data = await resp.json()
+      if (resp.ok && data.content) {
         setContent(data.content)
         setMode('write')
+      } else {
+        setResult(`❌ ${data.error || 'Generation failed'}`)
       }
-    } catch {}
+    } catch (e) {
+      setResult(`❌ ${e instanceof Error ? e.message : 'Network error'}`)
+    }
     setGenerating(false)
-  }, [productId, platform, topic])
+  }, [productId, platform, topic, effectiveSize])
 
   const generateImage = useCallback(async () => {
     setImageLoading(true)
@@ -71,7 +76,7 @@ export function QuickPost({ productId, productName, platform, chatId, channelUse
       }
     } catch {}
     setImageLoading(false)
-  }, [productId, platform, topic, content])
+  }, [productId, platform, topic, content, effectiveSize])
 
   const publish = useCallback(async () => {
     if (!content.trim()) return
