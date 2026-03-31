@@ -13,6 +13,7 @@ type Account = {
   display_name?: string
   bio?: string
   profile_url?: string
+  chat_id?: string
   website_field?: string
   has_2fa: boolean
   status: string
@@ -108,6 +109,7 @@ export function PlatformSetupClient({ initialAccounts, products }: Props) {
       email_used: a.email_used || '',
       password_encrypted: a.password_encrypted || '',
       profile_url: a.profile_url || '',
+      chat_id: a.chat_id || '',
       notes: a.notes || '',
     })
   }
@@ -178,6 +180,7 @@ export function PlatformSetupClient({ initialAccounts, products }: Props) {
                             </span>
                           </div>
                           {a.email_used && <p className="text-[11px] text-gray-400">{a.email_used}</p>}
+                          {a.chat_id && <p className="text-[11px] text-gray-400 font-mono">chat: {a.chat_id}</p>}
                         </div>
 
                         {/* Status button */}
@@ -245,13 +248,22 @@ export function PlatformSetupClient({ initialAccounts, products }: Props) {
                               />
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-3 gap-2">
                             <div>
                               <label className="text-[10px] uppercase tracking-wider text-gray-400">Profile URL</label>
                               <input
                                 type="url" value={editFields.profile_url || ''}
                                 onChange={e => setEditFields(p => ({ ...p, profile_url: e.target.value }))}
                                 className="field-input text-xs py-1"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] uppercase tracking-wider text-gray-400">Chat ID <span className="normal-case text-gray-300">(Telegram)</span></label>
+                              <input
+                                type="text" value={editFields.chat_id || ''}
+                                onChange={e => setEditFields(p => ({ ...p, chat_id: e.target.value }))}
+                                placeholder="-100..."
+                                className="field-input text-xs py-1 font-mono"
                               />
                             </div>
                             <div>

@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest) {
 
   const allowed = ['status', 'username', 'email_used', 'password_encrypted', 'display_name',
     'bio', 'profile_url', 'website_field', 'has_2fa', 'priority', 'notes',
-    'followers_goal', 'api_key', 'api_secret']
+    'followers_goal', 'api_key', 'api_secret', 'chat_id']
 
   const update: Record<string, unknown> = {}
   for (const key of allowed) {
