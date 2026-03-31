@@ -27,6 +27,8 @@ type Props = {
   products: { id: string; name: string }[]
 }
 
+type Toast = { message: string; type: 'success' | 'error' } | null
+
 const STATUS_STYLES: Record<string, { bg: string; label: string }> = {
   not_started: { bg: 'bg-gray-100 text-gray-500 border-gray-200', label: '⬜ Not started' },
   registered: { bg: 'bg-blue-50 text-blue-600 border-blue-200', label: '📝 Registered' },
@@ -69,25 +71,39 @@ export function PlatformSetupClient({ initialAccounts, products }: Props) {
   const [saving, setSaving] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [addForm, setAddForm] = useState({ product_id: '', platform: '', username: '', email_used: '', chat_id: '', notes: '' })
+  const [toast, setToast] = useState<Toast>(null)
+
+  const showToast = useCallback((message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 2000)
+  }, [])
 
   const ALL_PLATFORMS = ['twitter', 'linkedin', 'instagram', 'youtube', 'tiktok', 'telegram', 'devto', 'hashnode', 'medium', 'reddit', 'facebook', 'producthunt', 'indiehackers', 'hackernews', 'github', 'googlebusiness']
 
   const handleAddPlatform = useCallback(async () => {
     if (!addForm.product_id || !addForm.platform) return
     setSaving(true)
-    const resp = await fetch('/api/platform-accounts/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addForm),
-    })
-    if (resp.ok) {
-      const { account } = await resp.json()
-      setAccounts(prev => [...prev, account])
-      setShowAdd(false)
-      setAddForm({ product_id: '', platform: '', username: '', email_used: '', chat_id: '', notes: '' })
+    try {
+      const resp = await fetch('/api/platform-accounts/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addForm),
+      })
+      if (resp.ok) {
+        const { account } = await resp.json()
+        setAccounts(prev => [...prev, account])
+        setShowAdd(false)
+        setAddForm({ product_id: '', platform: '', username: '', email_used: '', chat_id: '', notes: '' })
+        showToast('✅ Platform added', 'success')
+      } else {
+        const err = await resp.json().catch(() => ({ error: 'Unknown error' }))
+        showToast(`❌ ${err.error || 'Error adding'}`, 'error')
+      }
+    } catch {
+      showToast('❌ Network error', 'error')
     }
     setSaving(false)
-  }, [addForm])
+  }, [addForm, showToast])
 
   const filtered = accounts.filter(a => {
     if (filterProduct && a.product_id !== filterProduct) return false
@@ -102,26 +118,39 @@ export function PlatformSetupClient({ initialAccounts, products }: Props) {
     groups[a.product_id].push(a)
   }
 
-  const updateAccount = useCallback(async (id: string, updates: Record<string, unknown>) => {
+  const updateAccount = useCallback(async (id: string, updates: Record<string, unknown>): Promise<boolean> => {
     setSaving(true)
-    const resp = await fetch('/api/platform-accounts', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, ...updates }),
-    })
-    if (resp.ok) {
-      const { account } = await resp.json()
-      setAccounts(prev => prev.map(a => a.id === id ? { ...a, ...account } : a))
+    try {
+      const resp = await fetch('/api/platform-accounts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      })
+      if (resp.ok) {
+        const { account } = await resp.json()
+        setAccounts(prev => prev.map(a => a.id === id ? { ...a, ...account } : a))
+        setSaving(false)
+        return true
+      } else {
+        const err = await resp.json().catch(() => ({ error: 'Unknown error' }))
+        showToast(`❌ ${err.error || 'Error saving'}`, 'error')
+        setSaving(false)
+        return false
+      }
+    } catch {
+      showToast('❌ Network error', 'error')
+      setSaving(false)
+      return false
     }
-    setSaving(false)
-  }, [])
+  }, [showToast])
 
-  const cycleStatus = useCallback((a: Account) => {
+  const cycleStatus = useCallback(async (a: Account) => {
     const order = ['not_started', 'registered', 'configured', 'active']
     const idx = order.indexOf(a.status)
     const next = order[(idx + 1) % order.length]
-    updateAccount(a.id, { status: next })
-  }, [updateAccount])
+    const ok = await updateAccount(a.id, { status: next })
+    if (ok) showToast('✅ Saved', 'success')
+  }, [updateAccount, showToast])
 
   const startEdit = (a: Account) => {
     setEditingId(a.id)
@@ -137,12 +166,24 @@ export function PlatformSetupClient({ initialAccounts, products }: Props) {
 
   const saveEdit = async () => {
     if (!editingId) return
-    await updateAccount(editingId, editFields)
-    setEditingId(null)
+    const ok = await updateAccount(editingId, editFields)
+    if (ok) {
+      showToast('✅ Saved', 'success')
+      setEditingId(null)
+    }
   }
 
   return (
     <div>
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium transition-all animate-in fade-in slide-in-from-top-2 ${
+          toast.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          {toast.message}
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex items-center gap-3 mb-5">
         <select value={filterProduct} onChange={e => setFilterProduct(e.target.value)} className="field-input w-auto text-sm py-1.5">
