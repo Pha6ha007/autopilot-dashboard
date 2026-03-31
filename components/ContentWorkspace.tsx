@@ -240,7 +240,7 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
           </div>
 
           <select value={filterProduct} onChange={e => setFilterProduct(e.target.value)}
-            className="field-input w-auto text-xs py-1">
+            className="field-input w-48 text-xs py-1.5">
             <option value="">All products</option>
             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
