@@ -7,9 +7,9 @@ const SHORT_PLATFORMS = new Set(['twitter', 'telegram', 'reddit', 'facebook', 'i
 const LONG_PLATFORMS = new Set(['linkedin', 'devto', 'hashnode', 'medium', 'youtube'])
 
 export function selectModel(task: TaskType, platform?: string): string {
-  const MODEL_COMPLEX = process.env.MODEL_COMPLEX || 'minimax/minimax-m2.5'
-  const MODEL_SIMPLE = process.env.MODEL_SIMPLE || 'google/gemini-2.0-flash-001'
-  const MODEL_SCRIPT = process.env.MODEL_SCRIPT || 'minimax/minimax-m1'
+  const MODEL_COMPLEX = (process.env.MODEL_COMPLEX || 'minimax/minimax-m2.5').trim()
+  const MODEL_SIMPLE = (process.env.MODEL_SIMPLE || 'google/gemini-2.0-flash-001').trim()
+  const MODEL_SCRIPT = (process.env.MODEL_SCRIPT || 'minimax/minimax-m1').trim()
 
   switch (task) {
     case 'script':
@@ -45,7 +45,7 @@ export async function callLLM(params: {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not configured')
 
-  const fallbackModel = process.env.MODEL_FALLBACK || 'anthropic/claude-sonnet-4'
+  const fallbackModel = (process.env.MODEL_FALLBACK || 'anthropic/claude-sonnet-4').trim()
 
   // Try primary model
   for (const model of [params.model, fallbackModel]) {

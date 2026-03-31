@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { data: ctx } = await supabaseAdmin.from('product_contexts').select('positioning, target_audience, cta').eq('product_id', product_id).maybeSingle()
     if (ctx?.positioning) productInfo += ` Positioning: ${ctx.positioning}. Audience: ${ctx.target_audience || ''}. CTA: ${ctx.cta || ''}.`
 
-    const model = process.env.MODEL_SIMPLE || 'google/gemini-2.0-flash-001'
+    const model = (process.env.MODEL_SIMPLE || 'google/gemini-2.0-flash-001').trim()
     const guidelines = PLATFORM_GUIDELINES[platform] || 'Write an engaging post.'
 
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
