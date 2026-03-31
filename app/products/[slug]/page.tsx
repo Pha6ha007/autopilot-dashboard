@@ -71,9 +71,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h1 className="font-display text-2xl font-semibold text-gray-900">{product.name}</h1>
-              <span className="pill pill-green">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"/>
-                active
+              <span className={`pill ${product.paused ? 'pill-yellow' : 'pill-green'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${product.paused ? 'bg-amber-500' : 'bg-emerald-500'} inline-block`}/>
+                {product.paused ? 'paused' : 'active'}
               </span>
             </div>
             {product.site && (

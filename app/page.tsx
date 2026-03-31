@@ -28,7 +28,7 @@ export default async function DashboardPage() {
     { data: pendingDrafts },
     { data: pendingQueue },
   ] = await Promise.all([
-    supabaseAdmin.from('products').select('*').eq('active', true).order('name'),
+    supabaseAdmin.from('products').select('*').neq('archived', true).order('name'),
     supabaseAdmin.from('publications').select('id,product_id,platform,status,topic,publish_url,published_at,created_at').order('created_at', { ascending: false }).limit(50),
     supabaseAdmin.from('workflow_runs').select('*').order('started_at', { ascending: false }).limit(6),
     supabaseAdmin.from('content_plan').select('id').eq('status', 'scheduled'),
@@ -192,9 +192,9 @@ export default async function DashboardPage() {
                       <p className="text-gray-400 text-xs mt-0.5">{product.site}</p>
                     )}
                   </div>
-                  <span className="pill pill-green">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"/>
-                    active
+                  <span className={`pill ${product.paused ? 'pill-yellow' : 'pill-green'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${product.paused ? 'bg-amber-500' : 'bg-emerald-500'} inline-block`}/>
+                    {product.paused ? 'paused' : 'active'}
                   </span>
                 </div>
 
