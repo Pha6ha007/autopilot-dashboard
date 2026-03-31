@@ -110,7 +110,7 @@ CRITICAL RULES:
 - Create something visually striking that would stop someone scrolling
 - The mood should match the topic: ${topic}`
 
-  const model = 'google/gemini-2.5-flash-preview:imagegen'
+  const model = 'google/gemini-2.5-flash-image'
 
   try {
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
