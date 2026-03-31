@@ -2,12 +2,13 @@
 import Link from 'next/link'
 import { PlatformIcon } from './PlatformIcon'
 import { AutoTierBadge } from './AutoTierBadge'
+import { QuickPost } from './QuickPost'
 import { getPlatformType } from '@/lib/platform-types'
 
 type Props = {
   product: { id: string; name: string; site: string; channels: string[]; auto_publish: boolean }
   platform: string
-  account: { username?: string; profile_url?: string; status: string; email_used?: string; followers_goal?: number } | null
+  account: { username?: string; profile_url?: string; status: string; email_used?: string; followers_goal?: number; chat_id?: string } | null
   queue: { id: string; content: string; status: string; topic?: string; created_at: string }[]
   published: { id: string; title: string; platform: string; status: string; published_at?: string; publish_url?: string }[]
   metrics: { views: number; likes: number; comments: number; shares: number; engagement_rate: number; created_at: string }[]
@@ -117,6 +118,14 @@ export function PlatformWorkspaceClient({ product, platform, account, queue, pub
               )}
             </div>
           </div>
+
+          {/* Quick Post */}
+          <QuickPost
+            productId={product.id}
+            productName={product.name}
+            platform={platform}
+            chatId={account?.chat_id}
+          />
         </div>
 
         {/* Right column — Content */}
