@@ -51,7 +51,8 @@ type Publication = {
   id: number
   product_id: string
   platform: string
-  title: string
+  topic?: string
+  content_preview?: string
   status: string
   published_at?: string
   publish_url?: string
@@ -221,7 +222,7 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
       <div className={`flex-1 flex flex-col min-w-0 ${selected ? 'hidden lg:flex' : ''}`}>
 
         {/* Header + Tabs */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-5 flex-shrink-0">
           <div className="flex items-center gap-1 glass rounded-xl p-1">
             {([
               { key: 'review' as Tab, label: '✏️ Review', count: counts.review },
@@ -366,11 +367,16 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
             {filteredPublished.map(p => (
               <div key={p.id} className="glass rounded-xl p-3">
                 <div className="flex items-center gap-2">
-                  <PlatformIcon platform={p.platform} size={14} />
-                  <span className="text-xs text-gray-700 flex-1 truncate">{p.title}</span>
+                  <PlatformIcon platform={p.platform} size={16} />
+                  <span className="text-xs font-medium text-gray-700">{p.product_id}</span>
+                  <span className="text-xs text-gray-400 capitalize">{p.platform}</span>
+                  <span className="flex-1" />
                   {p.published_at && <span className="text-[10px] text-gray-400"><DateStr date={p.published_at} /></span>}
                   {p.publish_url && <a href={p.publish_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-500">↗</a>}
                 </div>
+                {(p.topic || p.content_preview) && (
+                  <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{p.topic || p.content_preview}</p>
+                )}
               </div>
             ))}
           </div>

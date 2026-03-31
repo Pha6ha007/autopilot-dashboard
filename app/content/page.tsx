@@ -31,7 +31,7 @@ export default async function ContentPage() {
       .limit(50),
     supabaseAdmin
       .from('publications')
-      .select('*')
+      .select('id, product_id, platform, topic, content_preview, status, published_at, publish_url')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
       .limit(30),
