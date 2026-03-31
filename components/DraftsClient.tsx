@@ -312,7 +312,8 @@ export function DraftsClient({ initialDrafts, products }: Props) {
                         <PlatformIcon platform={d.platform} size={18} />
                         <span className="text-sm font-semibold text-gray-700 capitalize">{d.platform}</span>
                         <AutoTierBadge platform={d.platform} size="xs" />
-                        <span className={`ml-auto text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[d.status] || ''}`}>
+                        <a href={`/content/${d.id}`} className="ml-auto text-[10px] text-indigo-400 hover:text-indigo-600 mr-2">Open →</a>
+                        <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[d.status] || ''}`}>
                           {d.status}
                         </span>
                       </div>
