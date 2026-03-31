@@ -39,12 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {[
                   { href: '/', label: 'Dashboard' },
                   { href: '/content', label: 'Content' },
-                  { href: '/calendar', label: 'Calendar' },
-                  { href: '/drafts', label: 'Drafts' },
-                  { href: '/templates', label: 'Templates' },
-                  { href: '/queue', label: 'Queue' },
-                  { href: '/workflows', label: 'Workflows' },
                   { href: '/analytics', label: 'Analytics' },
+                  { href: '/workflows', label: 'Workflows' },
+                  { href: '/templates', label: 'Templates' },
                   { href: '/setup', label: 'Setup' },
                   { href: '/errors', label: 'Errors' },
                 ].map(({ href, label }) => (

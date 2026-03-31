@@ -146,6 +146,25 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {/* Recent Activity */}
+      <div className="glass rounded-2xl p-5 fade-up">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display font-semibold text-gray-800">Recent Activity</h2>
+          <Link href="/content" className="text-xs text-indigo-500 hover:text-indigo-700">View all →</Link>
+        </div>
+        <div className="space-y-1.5">
+          {recentPubs.slice(0, 6).map((pub: any) => (
+            <div key={pub.id} className="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-white/30 transition-colors">
+              <PlatformIcon platform={pub.platform} size={16} />
+              <span className="text-xs text-gray-700 flex-1 truncate">{pub.topic || 'Post published'}</span>
+              <span className="text-[10px] text-gray-400">{pub.product_id}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${pub.status === 'published' ? 'bg-emerald-400' : pub.status === 'failed' ? 'bg-red-400' : 'bg-gray-300'}`} />
+            </div>
+          ))}
+          {recentPubs.length === 0 && <p className="text-xs text-gray-400 text-center py-3">No recent activity</p>}
+        </div>
+      </div>
+
       {/* Products grid */}
       <div className="fade-up">
         <h2 className="font-display text-lg font-semibold text-gray-800 mb-4">Products</h2>
