@@ -135,7 +135,16 @@ CRITICAL RULES:
     const choice = data.choices?.[0]?.message
     let imageUrl = ''
 
-    if (choice?.content) {
+    // Check message.images (Nano Banana returns images here)
+    if (choice?.images && Array.isArray(choice.images) && choice.images.length > 0) {
+      const img = choice.images[0]
+      if (typeof img === 'string') imageUrl = img
+      else if (img?.image_url?.url) imageUrl = img.image_url.url
+      else if (img?.url) imageUrl = img.url
+    }
+
+    // Fallback: check content array
+    if (!imageUrl && choice?.content) {
       if (Array.isArray(choice.content)) {
         const imagePart = choice.content.find((p: { type: string; image_url?: { url: string } }) => p.type === 'image_url')
         if (imagePart?.image_url?.url) imageUrl = imagePart.image_url.url
@@ -144,6 +153,8 @@ CRITICAL RULES:
         else if (choice.content.startsWith('data:image')) imageUrl = choice.content
       }
     }
+
+    // Fallback: top-level images
     if (!imageUrl && data.images) {
       imageUrl = Array.isArray(data.images) ? data.images[0] : data.images
     }
