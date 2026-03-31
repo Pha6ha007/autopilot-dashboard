@@ -24,7 +24,7 @@ export default async function PlatformWorkspacePage({
     supabaseAdmin.from('generated_content').select('id, content, status, topic, created_at').eq('product_id', slug).eq('platform', platform).in('status', ['draft', 'approved', 'pending', 'queued']).order('created_at', { ascending: false }).limit(10),
     supabaseAdmin.from('publications').select('id, topic, content_preview, platform, status, published_at, publish_url').eq('product_id', slug).eq('platform', platform).order('published_at', { ascending: false }).limit(10),
     supabaseAdmin.from('content_metrics').select('*').eq('product_id', slug).eq('platform', platform).order('created_at', { ascending: false }).limit(20),
-    supabaseAdmin.from('content_plan').select('id, topic, type, scheduled_for, status, platforms').eq('product_id', slug).eq('status', 'scheduled').gte('scheduled_for', new Date().toISOString().split('T')[0]).order('scheduled_for').limit(20),
+    supabaseAdmin.from('content_plan').select('id, topic, type, scheduled_for, status, platforms, content_size').eq('product_id', slug).eq('status', 'scheduled').gte('scheduled_for', new Date().toISOString().split('T')[0]).order('scheduled_for').limit(20),
   ])
 
   if (!product) notFound()

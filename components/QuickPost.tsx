@@ -1,6 +1,7 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { PlatformIcon } from './PlatformIcon'
+import { CONTENT_SIZES, ALWAYS_SHORT, getSizeLimit, type ContentSize } from '@/lib/content-size'
 
 type Props = {
   productId: string
@@ -20,6 +21,7 @@ export function QuickPost({ productId, productName, platform, chatId, channelUse
   const [mode, setMode] = useState<'write' | 'generate'>('write')
   const [topic, setTopic] = useState('')
   const [content, setContent] = useState('')
+  const [contentSize, setContentSize] = useState<ContentSize>('medium')
   const [generating, setGenerating] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [result, setResult] = useState('')
@@ -27,6 +29,8 @@ export function QuickPost({ productId, productName, platform, chatId, channelUse
   const [imageLoading, setImageLoading] = useState(false)
   const [publishUrl, setPublishUrl] = useState('')
 
+  const isAlwaysShort = ALWAYS_SHORT.includes(platform)
+  const effectiveSize: ContentSize = isAlwaysShort ? 'short' : contentSize
   const charLimit = CHAR_LIMITS[platform] || 5000
 
   const generateContent = useCallback(async () => {
@@ -36,7 +40,7 @@ export function QuickPost({ productId, productName, platform, chatId, channelUse
       const resp = await fetch('/api/quick-post/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_id: productId, platform, topic }),
+        body: JSON.stringify({ product_id: productId, platform, topic, content_size: effectiveSize }),
       })
       if (resp.ok) {
         const data = await resp.json()
@@ -58,6 +62,7 @@ export function QuickPost({ productId, productName, platform, chatId, channelUse
           topic: topic || content.slice(0, 100),
           platform,
           style: 'cinematic',
+          content_size: effectiveSize,
         }),
       })
       if (resp.ok) {
@@ -134,6 +139,23 @@ export function QuickPost({ productId, productName, platform, chatId, channelUse
         </button>
       </div>
 
+      {/* Size selector — hidden for always-short platforms */}
+      {!isAlwaysShort && (
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium mr-1">Size:</span>
+          {(['short', 'medium', 'long'] as ContentSize[]).map(s => (
+            <button key={s} onClick={() => setContentSize(s)}
+              className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all ${
+                contentSize === s
+                  ? 'bg-gray-800 text-white shadow-sm'
+                  : 'text-gray-500 hover:bg-gray-100'
+              }`}>
+              {s === 'short' ? 'S' : s === 'medium' ? 'M' : 'L'} {CONTENT_SIZES[s].label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Generate mode — topic input */}
       {mode === 'generate' && (
         <div className="flex gap-2">
@@ -156,6 +178,7 @@ export function QuickPost({ productId, productName, platform, chatId, channelUse
           <span className={`text-xs ${content.length > charLimit ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
             {content.length} / {charLimit}
           </span>
+          <span className="text-[10px] text-gray-400">Target: {getSizeLimit(platform, effectiveSize)}</span>
         </div>
       </div>
 

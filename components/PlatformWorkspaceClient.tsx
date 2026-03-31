@@ -12,7 +12,7 @@ type Props = {
   queue: { id: string; content: string; status: string; topic?: string; created_at: string }[]
   published: { id: string; topic?: string; content_preview?: string; platform: string; status: string; published_at?: string; publish_url?: string }[]
   metrics: { views: number; likes: number; comments: number; shares: number; engagement_rate: number; created_at: string }[]
-  plan: { id: number; topic: string; type: string; scheduled_for: string; status: string }[]
+  plan: { id: number; topic: string; type: string; scheduled_for: string; status: string; content_size?: string }[]
 }
 
 const BEST_TIMES: Record<string, string> = {
@@ -170,6 +170,13 @@ export function PlatformWorkspaceClient({ product, platform, account, queue, pub
                   <div key={p.id} className="flex items-center gap-3 py-1.5 border-b border-gray-100/60 last:border-0">
                     <span className="text-xs text-gray-500 w-16">{p.scheduled_for}</span>
                     <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">{p.type}</span>
+                    {p.content_size && (
+                      <span className={`text-[9px] font-bold px-1 rounded ${
+                        p.content_size === 'short' ? 'bg-sky-50 text-sky-600' :
+                        p.content_size === 'long' ? 'bg-violet-50 text-violet-600' :
+                        'bg-gray-50 text-gray-400'
+                      }`}>{p.content_size === 'short' ? 'S' : p.content_size === 'long' ? 'L' : 'M'}</span>
+                    )}
                     <span className="text-xs text-gray-700 flex-1 truncate">{p.topic}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                       p.status === 'scheduled' ? 'bg-blue-50 text-blue-600' :

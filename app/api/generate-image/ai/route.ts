@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getImageAspect, type ContentSize } from '@/lib/content-size'
 
 // Visual style presets — each creates a distinct, high-quality aesthetic
 const STYLES: Record<string, { name: string; prompt: string }> = {
@@ -56,7 +57,9 @@ const PRODUCT_VIBES: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { draft_id, product_id, topic, platform, style } = body
+  const { draft_id, product_id, topic, platform, style, content_size } = body
+  const size: ContentSize = content_size || 'medium'
+  const aspect = getImageAspect(size)
 
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) {
@@ -98,6 +101,8 @@ TOPIC: "${topic}"
 PRODUCT: ${productName}${positioning ? ` — ${positioning}` : ''}
 
 VISUAL STYLE: ${selectedStyle.prompt}
+
+ASPECT RATIO: ${aspect.hint}
 
 COMPOSITION: ${platformHint}
 

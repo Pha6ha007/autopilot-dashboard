@@ -17,6 +17,7 @@ type ContentItem = {
   template?: string
   status: string
   image_url?: string
+  content_size?: string
   created_at: string
   approved_at?: string
   published_at?: string
@@ -33,6 +34,7 @@ type PlanItem = {
   platforms: string[]
   scheduled_for: string
   status: string
+  content_size?: string
   products?: { name: string }
 }
 
@@ -264,6 +266,11 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
                   <PlatformIcon platform={d.platform} size={16} />
                   <span className="text-xs font-semibold text-gray-700">{d.products?.name || d.product_id}</span>
                   <span className="text-xs text-gray-400 capitalize">{d.platform}</span>
+                  {d.content_size && d.content_size !== 'medium' && (
+                    <span className={`text-[9px] font-bold px-1 rounded ${
+                      d.content_size === 'short' ? 'bg-sky-50 text-sky-600' : 'bg-violet-50 text-violet-600'
+                    }`}>{d.content_size === 'short' ? 'S' : 'L'}</span>
+                  )}
                   <span className={`ml-auto w-2 h-2 rounded-full ${STATUS_DOT[d.status]}`} />
                 </div>
                 <p className="text-xs text-gray-600 line-clamp-2">{d.content.slice(0, 120)}</p>
@@ -322,7 +329,16 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
                         p.status === 'scheduled' ? 'bg-blue-50 border-blue-200 text-blue-700' :
                         'bg-gray-50 border-gray-200 text-gray-600'
                       }`}>
-                        <p className="font-medium truncate">{p.products?.name}</p>
+                        <div className="flex items-center gap-1">
+                          <p className="font-medium truncate flex-1">{p.products?.name}</p>
+                          {p.content_size && (
+                            <span className={`shrink-0 w-3.5 h-3.5 rounded text-[8px] font-bold flex items-center justify-center ${
+                              p.content_size === 'short' ? 'bg-sky-100 text-sky-600' :
+                              p.content_size === 'long' ? 'bg-violet-100 text-violet-600' :
+                              'bg-gray-100 text-gray-500'
+                            }`}>{p.content_size === 'short' ? 'S' : p.content_size === 'long' ? 'L' : 'M'}</span>
+                          )}
+                        </div>
                         <p className="truncate opacity-70">{p.topic}</p>
                       </div>
                     ))}

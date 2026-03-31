@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { selectModel, callLLM } from '@/lib/llm'
+import { getSizeLimit, type ContentSize } from '@/lib/content-size'
 
 // POST /api/drafts/[id]/regenerate — regenerate content via LLM
 export async function POST(
@@ -10,6 +11,7 @@ export async function POST(
   const { id } = await params
   const body = await req.json().catch(() => ({}))
   const instructions = body.instructions || ''
+  const contentSize: ContentSize = body.content_size || 'medium'
 
   // Get current draft + product context
   const { data: draft, error: draftErr } = await supabaseAdmin
@@ -58,12 +60,15 @@ CTA: ${context.cta || draft.products?.site || ''}` : `
 Product: ${draft.products?.name} — ${draft.products?.one_liner || ''}
 Site: ${draft.products?.site || ''}`
 
+  const sizeLimit = getSizeLimit(draft.platform, contentSize)
+
   const systemPrompt = `You are a social media content writer.
 ${contextBlock}
 
 Platform: ${draft.platform}
 Guidelines: ${platformGuidelines[draft.platform] || 'Write an engaging post.'}
 Tone: ${draft.products?.tone || 'professional'}
+Content length requirement: ${sizeLimit}. Write exactly within this range — do not write shorter or longer.
 
 ${instructions ? `Special instructions: ${instructions}` : ''}
 

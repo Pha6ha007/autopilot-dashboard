@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { PlatformIcon } from './PlatformIcon'
 import { AutoTierBadge } from './AutoTierBadge'
 import { getPlatformType, PLATFORM_OPEN_URLS } from '@/lib/platform-types'
+import { CONTENT_SIZES, ALWAYS_SHORT, type ContentSize } from '@/lib/content-size'
 
 type ContentItem = {
   id: string
@@ -84,6 +85,7 @@ export function ContentCardClient({ item: initialItem, source, context, versions
   const [saving, setSaving] = useState(false)
   const [regenOpen, setRegenOpen] = useState(false)
   const [regenPrompt, setRegenPrompt] = useState('')
+  const [regenSize, setRegenSize] = useState<ContentSize>((initialItem as { content_size?: ContentSize }).content_size || 'medium')
   const [adaptPlatform, setAdaptPlatform] = useState('')
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [imageLoading, setImageLoading] = useState(false)
@@ -133,7 +135,7 @@ export function ContentCardClient({ item: initialItem, source, context, versions
     const resp = await fetch(`/api/drafts/${item.id}/regenerate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ instructions: regenPrompt }),
+      body: JSON.stringify({ instructions: regenPrompt, content_size: regenSize }),
     })
     if (resp.ok) {
       const { draft } = await resp.json()
@@ -287,6 +289,17 @@ export function ContentCardClient({ item: initialItem, source, context, versions
         <div className="glass rounded-2xl p-6">
           <h2 className="font-display font-semibold text-gray-800 mb-3">🔄 Regenerate Content</h2>
           <textarea value={regenPrompt} onChange={e => setRegenPrompt(e.target.value)} rows={3} placeholder="Make it more technical and add specific metrics..." className="field-input text-sm resize-none w-full mb-3" />
+          {!ALWAYS_SHORT.includes(item.platform) && (
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs text-gray-500">Content size:</span>
+              <select value={regenSize} onChange={e => setRegenSize(e.target.value as ContentSize)}
+                className="field-input w-auto text-xs py-1">
+                {(['short', 'medium', 'long'] as ContentSize[]).map(s => (
+                  <option key={s} value={s}>{CONTENT_SIZES[s].label} — {CONTENT_SIZES[s].description}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <button onClick={handleRegenerate} disabled={saving} className="text-sm font-medium text-white bg-violet-500 hover:bg-violet-600 px-4 py-2 rounded-xl disabled:opacity-50">{saving ? '⏳ Generating…' : '🔄 Generate new version'}</button>
             <button onClick={() => setRegenOpen(false)} className="text-sm text-gray-500">Cancel</button>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getSizeLimit, type ContentSize } from '@/lib/content-size'
 
 const PLATFORM_GUIDELINES: Record<string, string> = {
   linkedin: 'Professional tone. Up to 3000 chars. 3-5 hashtags at the end.',
@@ -15,12 +16,15 @@ const PLATFORM_GUIDELINES: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { product_id, platform, topic } = await req.json()
+    const { product_id, platform, topic, content_size } = await req.json()
 
     if (!topic) return NextResponse.json({ error: 'topic required' }, { status: 400 })
 
     const apiKey = process.env.OPENROUTER_API_KEY
     if (!apiKey) return NextResponse.json({ error: 'OPENROUTER_API_KEY not set' }, { status: 500 })
+
+    const size: ContentSize = content_size || 'medium'
+    const sizeLimit = getSizeLimit(platform || 'default', size)
 
     let productInfo = ''
     const { data: prod } = await supabaseAdmin.from('products').select('name, one_liner, tone, site').eq('id', product_id).maybeSingle()
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
         model,
         max_tokens: 1024,
         messages: [
-          { role: 'system', content: `You are a content writer. ${productInfo}\nPlatform: ${platform}. Guidelines: ${guidelines}\nWrite ONLY the post text. No JSON, no markdown fences.` },
+          { role: 'system', content: `You are a content writer. ${productInfo}\nPlatform: ${platform}. Guidelines: ${guidelines}\nContent length requirement: ${sizeLimit}. Write exactly within this range — do not write shorter or longer.\nWrite ONLY the post text. No JSON, no markdown fences.` },
           { role: 'user', content: `Write a post about: ${topic}` },
         ],
       }),
