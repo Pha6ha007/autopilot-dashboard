@@ -25,12 +25,16 @@ export default async function DashboardPage() {
     { data: workflows },
     { data: scheduled },
     { data: openErrors },
+    { data: pendingDrafts },
+    { data: pendingQueue },
   ] = await Promise.all([
     supabaseAdmin.from('products').select('*').eq('active', true).order('name'),
     supabaseAdmin.from('publications').select('id,product_id,platform,status,topic,publish_url,published_at,created_at').order('created_at', { ascending: false }).limit(50),
     supabaseAdmin.from('workflow_runs').select('*').order('started_at', { ascending: false }).limit(6),
     supabaseAdmin.from('content_plan').select('id').eq('status', 'scheduled'),
     supabaseAdmin.from('errors').select('id').eq('status', 'open'),
+    supabaseAdmin.from('generated_content').select('id,product_id,platform,topic,created_at').eq('status', 'draft').order('created_at', { ascending: false }).limit(5),
+    supabaseAdmin.from('content_queue').select('id,product_id,platform').eq('status', 'pending').limit(5),
   ])
 
   const pubs = allPubs || []
@@ -99,6 +103,48 @@ export default async function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Today's Tasks */}
+      {((pendingDrafts || []).length > 0 || totalErrors > 0 || (pendingQueue || []).length > 0) && (
+        <div className="glass rounded-2xl p-5 fade-up">
+          <h2 className="font-display font-semibold text-gray-800 mb-3">📋 Today&apos;s Tasks</h2>
+          <div className="space-y-2">
+            {(pendingDrafts || []).length > 0 && (
+              <Link href="/drafts" className="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-white/50 transition-colors group">
+                <span className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 font-bold text-sm">{(pendingDrafts || []).length}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-800 group-hover:text-indigo-600 transition-colors">Drafts to review</p>
+                  <p className="text-xs text-gray-400">
+                    {(pendingDrafts || []).slice(0, 2).map(d => d.topic || d.platform).join(', ')}
+                    {(pendingDrafts || []).length > 2 && ` +${(pendingDrafts || []).length - 2} more`}
+                  </p>
+                </div>
+                <span className="text-xs text-gray-300 group-hover:text-indigo-400">Review →</span>
+              </Link>
+            )}
+            {(pendingQueue || []).length > 0 && (
+              <Link href="/queue" className="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-white/50 transition-colors group">
+                <span className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 font-bold text-sm">{(pendingQueue || []).length}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-800 group-hover:text-indigo-600 transition-colors">Queue items pending</p>
+                  <p className="text-xs text-gray-400">Waiting for approval or publishing</p>
+                </div>
+                <span className="text-xs text-gray-300 group-hover:text-indigo-400">View →</span>
+              </Link>
+            )}
+            {totalErrors > 0 && (
+              <Link href="/errors" className="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-white/50 transition-colors group">
+                <span className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 font-bold text-sm">{totalErrors}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-800 group-hover:text-red-600 transition-colors">Unresolved errors</p>
+                  <p className="text-xs text-gray-400">Workflow failures need attention</p>
+                </div>
+                <span className="text-xs text-gray-300 group-hover:text-red-400">Fix →</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Products grid */}
       <div className="fade-up">

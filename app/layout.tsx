@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { DM_Sans, Instrument_Sans } from 'next/font/google'
 import Link from 'next/link'
 import { NotificationBell } from '@/components/NotificationBell'
+import { GlobalSearch } from '@/components/GlobalSearch'
 import './globals.css'
 
 const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-body', weight: ['300','400','500','600'] })
@@ -34,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <span className="font-display font-semibold text-gray-800 text-[15px]">Autopilot</span>
               </Link>
 
-              <nav className="flex items-center gap-1">
+              <nav className="hidden lg:flex items-center gap-1">
                 {[
                   { href: '/', label: 'Dashboard' },
                   { href: '/content', label: 'Content' },
@@ -48,17 +49,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   { href: '/errors', label: 'Errors' },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href}
-                    className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-gray-900 hover:bg-white/70 transition-all font-medium">
+                    className="px-2.5 py-1.5 rounded-lg text-[13px] text-gray-500 hover:text-gray-900 hover:bg-white/70 transition-all font-medium">
                     {label}
                   </Link>
                 ))}
+              </nav>
+
+              <div className="flex items-center gap-1">
+                <GlobalSearch />
                 <NotificationBell />
                 <Link href="/products/new"
-                  className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors shadow-md shadow-indigo-100">
+                  className="ml-1 hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors shadow-md shadow-indigo-100">
                   <span className="text-base leading-none">+</span>
-                  Product
+                  <span className="hidden md:inline">Product</span>
                 </Link>
-              </nav>
+              </div>
             </div>
           </header>
 
