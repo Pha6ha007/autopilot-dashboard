@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { selectModel, callLLM } from '@/lib/llm'
 import { getSizeLimit, type ContentSize } from '@/lib/content-size'
+import { FORMAT_RULES, PLATFORM_GUIDELINES as SHARED_GUIDELINES } from '@/lib/format-rules'
 
 // POST /api/drafts/[id]/regenerate — regenerate content via LLM
 export async function POST(
@@ -38,17 +39,6 @@ export async function POST(
     .eq('id', id)
 
   // Build prompt
-  const platformGuidelines: Record<string, string> = {
-    twitter: 'Max 280 chars. Punchy, 1-2 hashtags. Include URL.',
-    linkedin: 'Max 1500 chars. Professional thought-leadership. Include URL.',
-    telegram: 'Max 500 chars. HTML format (<b>, <i>, <a>). Include URL.',
-    devto: 'Max 800 chars. Developer-focused, technical but accessible.',
-    reddit: 'Max 500 chars. Conversational, value-first, no self-promo feel.',
-    instagram: 'Max 2200 chars. Engaging story angle. Hashtags at end. Mention link in bio.',
-    medium: 'Max 1000 chars. Thoughtful, long-form style excerpt.',
-    hashnode: 'Max 800 chars. Developer community tone.',
-    facebook: 'Max 500 chars. Casual, engaging. Include URL.',
-  }
 
   const contextBlock = context ? `
 Product: ${context.positioning || draft.products?.one_liner || ''}
@@ -66,9 +56,11 @@ Site: ${draft.products?.site || ''}`
 ${contextBlock}
 
 Platform: ${draft.platform}
-Guidelines: ${platformGuidelines[draft.platform] || 'Write an engaging post.'}
+Guidelines: ${SHARED_GUIDELINES[draft.platform] || 'Write an engaging post.'}
 Tone: ${draft.products?.tone || 'professional'}
 Content length requirement: ${sizeLimit}. Write exactly within this range — do not write shorter or longer.
+
+${FORMAT_RULES}
 
 ${instructions ? `Special instructions: ${instructions}` : ''}
 

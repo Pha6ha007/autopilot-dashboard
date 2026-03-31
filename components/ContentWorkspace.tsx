@@ -5,6 +5,7 @@ import { PlatformIcon } from './PlatformIcon'
 import { AutoTierBadge } from './AutoTierBadge'
 import { DateStr } from './DateDisplay'
 import { getPlatformType, PLATFORM_OPEN_URLS } from '@/lib/platform-types'
+import { stripHtml } from '@/lib/format-rules'
 
 // ── Types ──
 
@@ -273,7 +274,7 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
                   )}
                   <span className={`ml-auto w-2 h-2 rounded-full ${STATUS_DOT[d.status]}`} />
                 </div>
-                <p className="text-xs text-gray-600 line-clamp-2">{d.content.slice(0, 120)}</p>
+                <p className="text-xs text-gray-600 line-clamp-2">{stripHtml(d.content).slice(0, 120)}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <button onClick={e => { e.stopPropagation(); approve(d.id) }} disabled={saving}
                     className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md hover:bg-emerald-100 disabled:opacity-50">✓ Approve</button>
@@ -294,7 +295,7 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
                   <span className="text-xs text-gray-400">{d.platform}</span>
                   <span className="ml-auto text-[10px] text-emerald-500">✓ approved</span>
                 </div>
-                <p className="text-[11px] text-gray-500 line-clamp-1 mt-1">{d.content.slice(0, 80)}</p>
+                <p className="text-[11px] text-gray-500 line-clamp-1 mt-1">{stripHtml(d.content).slice(0, 80)}</p>
               </div>
             ))}
           </div>
@@ -366,7 +367,7 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
                   <AutoTierBadge platform={q.platform} size="xs" />
                   <span className={`ml-auto w-2 h-2 rounded-full ${STATUS_DOT[q.status]}`} />
                 </div>
-                <p className="text-xs text-gray-600 line-clamp-2">{q.content.slice(0, 100)}</p>
+                <p className="text-xs text-gray-600 line-clamp-2">{stripHtml(q.content).slice(0, 100)}</p>
               </div>
             ))}
           </div>
@@ -391,7 +392,7 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
                   {p.publish_url && <a href={p.publish_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-500">↗</a>}
                 </div>
                 {(p.topic || p.content_preview) && (
-                  <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{p.topic || p.content_preview}</p>
+                  <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{stripHtml(p.topic || p.content_preview || '')}</p>
                 )}
               </div>
             ))}

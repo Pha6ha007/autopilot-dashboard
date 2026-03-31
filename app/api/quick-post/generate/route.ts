@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSizeLimit, type ContentSize } from '@/lib/content-size'
-
-const PLATFORM_GUIDELINES: Record<string, string> = {
-  linkedin: 'Professional tone. Up to 3000 chars. 3-5 hashtags at the end.',
-  twitter: 'Max 280 chars. 2-3 hashtags. Punchy.',
-  telegram: 'Casual tone. Emojis OK. HTML format (<b>, <i>). Link at end. Max 500 chars.',
-  devto: 'Technical markdown. Developer-focused.',
-  reddit: 'Conversational. No direct promo. Value-first.',
-  instagram: 'Short punchy caption. Hashtags at end. Max 2200 chars.',
-  facebook: 'Conversational. Question hooks.',
-  hashnode: 'Technical blog style. Markdown.',
-  medium: 'Thoughtful long-form.',
-}
+import { FORMAT_RULES, PLATFORM_GUIDELINES } from '@/lib/format-rules'
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,7 +35,7 @@ export async function POST(req: NextRequest) {
         model,
         max_tokens: 1024,
         messages: [
-          { role: 'system', content: `You are a content writer. ${productInfo}\nPlatform: ${platform}. Guidelines: ${guidelines}\nContent length requirement: ${sizeLimit}. Write exactly within this range — do not write shorter or longer.\nWrite ONLY the post text. No JSON, no markdown fences.` },
+          { role: 'system', content: `You are a content writer. ${productInfo}\nPlatform: ${platform}. Guidelines: ${guidelines}\nContent length requirement: ${sizeLimit}. Write exactly within this range — do not write shorter or longer.\n\n${FORMAT_RULES}\n\nWrite ONLY the post text. No JSON, no markdown fences.` },
           { role: 'user', content: `Write a post about: ${topic}` },
         ],
       }),

@@ -6,6 +6,7 @@ import { PlatformIcon } from './PlatformIcon'
 import { AutoTierBadge } from './AutoTierBadge'
 import { getPlatformType, PLATFORM_OPEN_URLS } from '@/lib/platform-types'
 import { CONTENT_SIZES, ALWAYS_SHORT, type ContentSize } from '@/lib/content-size'
+import { hasHtml, cleanHtmlForPlatform } from '@/lib/format-rules'
 
 type ContentItem = {
   id: string
@@ -187,6 +188,25 @@ export function ContentCardClient({ item: initialItem, source, context, versions
     setTimeout(() => setCopied(false), 2000)
   }
 
+  // Clean HTML tags — convert to platform-appropriate format
+  const handleCleanHtml = useCallback(async () => {
+    const cleaned = cleanHtmlForPlatform(item.content, item.platform)
+    if (cleaned === item.content) return
+    setSaving(true)
+    const resp = await fetch(`/api/content-card/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: cleaned }),
+    })
+    if (resp.ok) {
+      const { item: updated } = await resp.json()
+      setVersions(prev => [{ id: crypto.randomUUID(), version_number: prev.length + 1, content: item.content, created_at: new Date().toISOString(), created_by: 'html_cleanup' }, ...prev])
+      setItem(prev => ({ ...prev, ...updated }))
+      setEditText(cleaned)
+    }
+    setSaving(false)
+  }, [item.id, item.content, item.platform])
+
   // Restore version
   const restoreVersion = useCallback(async (v: Version) => {
     setEditText(v.content)
@@ -255,6 +275,9 @@ export function ContentCardClient({ item: initialItem, source, context, versions
               <>
                 <button onClick={() => { setEditing(true); setEditText(item.content) }} className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50">✏️ Edit</button>
                 <button onClick={copyText} className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50">{copied ? '✅ Copied' : '📋 Copy'}</button>
+                {hasHtml(item.content) && (
+                  <button onClick={handleCleanHtml} disabled={saving} className="text-xs px-2.5 py-1 rounded-lg border border-amber-200 text-amber-600 hover:text-amber-700 hover:bg-amber-50 disabled:opacity-50">🧹 Clean HTML</button>
+                )}
                 <button onClick={() => setRegenOpen(!regenOpen)} className="text-xs px-2.5 py-1 rounded-lg border border-violet-200 text-violet-500 hover:text-violet-700 hover:bg-violet-50">🔄 Regenerate</button>
               </>
             )}

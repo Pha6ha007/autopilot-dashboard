@@ -4,6 +4,7 @@ import { PlatformIcon } from './PlatformIcon'
 import { AutoTierBadge } from './AutoTierBadge'
 import { QuickPost } from './QuickPost'
 import { getPlatformType } from '@/lib/platform-types'
+import { stripHtml } from '@/lib/format-rules'
 
 type Props = {
   product: { id: string; name: string; site: string; channels: string[]; auto_publish: boolean }
@@ -153,7 +154,7 @@ export function PlatformWorkspaceClient({ product, platform, account, queue, pub
               {metrics.length > 0 && published.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-100/80">
                   <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Best performing post</p>
-                  <p className="text-xs text-gray-700 truncate">{published[0]?.topic || published[0]?.content_preview || 'N/A'}</p>
+                  <p className="text-xs text-gray-700 truncate">{stripHtml(published[0]?.topic || published[0]?.content_preview || 'N/A')}</p>
                 </div>
               )}
             </div>
@@ -198,7 +199,7 @@ export function PlatformWorkspaceClient({ product, platform, account, queue, pub
               <div className="space-y-2">
                 {queue.map(q => (
                   <Link key={q.id} href={`/content/${q.id}`} className="block py-2 px-3 rounded-lg hover:bg-white/50 transition-colors border-b border-gray-100/60 last:border-0">
-                    <p className="text-xs text-gray-700 line-clamp-2">{q.content.slice(0, 120)}</p>
+                  <p className="text-xs text-gray-700 line-clamp-2">{stripHtml(q.content).slice(0, 120)}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         q.status === 'draft' ? 'bg-amber-50 text-amber-600' :
@@ -221,7 +222,7 @@ export function PlatformWorkspaceClient({ product, platform, account, queue, pub
             ) : (
               <div className="space-y-2">
                 {published.map(p => {
-                  const preview = p.content_preview || p.topic || ''
+                  const preview = stripHtml(p.content_preview || p.topic || '')
                   const displayText = preview.length > 60 ? preview.slice(0, 60) + '…' : preview
                   const date = p.published_at ? new Date(p.published_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''
                   return (
