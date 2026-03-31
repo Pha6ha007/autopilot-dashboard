@@ -74,7 +74,7 @@ export function WorkflowRunRow({ run }: { run: WorkflowRun }) {
 
             {/* Time */}
             <div className="flex items-center justify-between gap-2">
-              <p className="text-gray-400 text-xs">
+              <p className="text-gray-400 text-xs" suppressHydrationWarning>
                 {formatDistanceToNow(new Date(run.started_at), { addSuffix: true })}
               </p>
               <span className={`text-gray-300 text-xs transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>

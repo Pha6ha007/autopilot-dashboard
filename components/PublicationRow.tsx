@@ -47,7 +47,7 @@ export function PublicationRow({ pub }: { pub: Pub }) {
         <PlatformIcon platform={pub.platform} size={20} />
         <div className="flex-1 min-w-0">
           <p className="text-[13px] text-gray-800 font-medium truncate">{pub.topic}</p>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-gray-400 mt-0.5" suppressHydrationWarning>
             {pub.product_id} · {pub.platform}
             {pub.published_at && (
               <> · {formatDistanceToNow(new Date(pub.published_at), { addSuffix: true })}</>

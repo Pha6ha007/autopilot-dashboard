@@ -3,6 +3,7 @@ import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { PlatformIcon } from './PlatformIcon'
 import { AutoTierBadge } from './AutoTierBadge'
+import { DateStr } from './DateDisplay'
 import { getPlatformType, PLATFORM_OPEN_URLS } from '@/lib/platform-types'
 
 // ── Types ──
@@ -127,6 +128,17 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
     }
     return map
   }, [plan, filterProduct])
+
+  // Drafts grouped by created date for calendar overlay
+  const draftsByDate = useMemo(() => {
+    const map: Record<string, number> = {}
+    for (const d of drafts) {
+      if (filterProduct && d.product_id !== filterProduct) continue
+      const day = d.created_at.split('T')[0]
+      map[day] = (map[day] || 0) + 1
+    }
+    return map
+  }, [drafts, filterProduct])
 
   // Counts
   const counts = useMemo(() => ({
@@ -295,10 +307,14 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
               {days.map((day, i) => {
                 const key = dateKey(day)
                 const items = planByDate[key] || []
+                const draftCount = draftsByDate[key] || 0
                 const isToday = key === dateKey(today)
                 return (
                   <div key={i} className={`rounded-xl p-2 min-h-[120px] ${isToday ? 'bg-indigo-50/50 border border-indigo-200/50' : 'bg-white/30 border border-gray-100/50'}`}>
-                    <p className={`text-[10px] font-medium mb-1 ${isToday ? 'text-indigo-600' : 'text-gray-400'}`}>{DAYS[i]} {day.getDate()}</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className={`text-[10px] font-medium ${isToday ? 'text-indigo-600' : 'text-gray-400'}`}>{DAYS[i]} {day.getDate()}</p>
+                      {draftCount > 0 && <span className="text-[9px] bg-amber-100 text-amber-600 px-1 rounded">{draftCount} drafts</span>}
+                    </div>
                     {items.map(p => (
                       <div key={p.id} className={`rounded-md px-1.5 py-1 mb-0.5 text-[10px] border ${
                         p.status === 'published' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
@@ -352,7 +368,7 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
                 <div className="flex items-center gap-2">
                   <PlatformIcon platform={p.platform} size={14} />
                   <span className="text-xs text-gray-700 flex-1 truncate">{p.title}</span>
-                  {p.published_at && <span className="text-[10px] text-gray-400">{new Date(p.published_at).toLocaleDateString()}</span>}
+                  {p.published_at && <span className="text-[10px] text-gray-400"><DateStr date={p.published_at} /></span>}
                   {p.publish_url && <a href={p.publish_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-500">↗</a>}
                 </div>
               </div>
@@ -463,7 +479,7 @@ export function ContentWorkspace({ drafts: initialDrafts, plan, queue: initialQu
               )}
 
               {selected.status === 'published' && (
-                <p className="text-xs text-blue-500">🚀 Published{(selected as ContentItem).published_at ? ` · ${new Date((selected as ContentItem).published_at!).toLocaleDateString()}` : ''}</p>
+                <p className="text-xs text-blue-500">🚀 Published{(selected as ContentItem).published_at ? ` · ${'published'}` : ''}</p>
               )}
             </div>
           </div>

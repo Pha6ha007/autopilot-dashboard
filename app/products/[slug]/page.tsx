@@ -9,6 +9,7 @@ import { ProductContextEditor } from '@/components/ProductContextEditor'
 import { ProductActions } from '@/components/ProductActions'
 
 export const revalidate = 30
+export const dynamic = 'force-dynamic'
 
 const STATUS_CLS: Record<string, string> = {
   published: 'pill-green',
@@ -147,7 +148,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   <p className="text-red-400 text-[11px] mt-0.5">{ps.failed} failed</p>
                 )}
                 {ps.last && (
-                  <p className="text-gray-400 text-[10px] mt-1 truncate">
+                  <p className="text-gray-400 text-[10px] mt-1 truncate" suppressHydrationWarning>
                     {formatDistanceToNow(new Date(ps.last), { addSuffix: true })}
                   </p>
                 )}
