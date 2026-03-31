@@ -54,6 +54,13 @@ export function PublicationRow({ pub }: { pub: Pub }) {
             )}
           </p>
         </div>
+        {pub.publish_url && (
+          <a href={pub.publish_url} target="_blank" rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()}
+            className="text-[10px] text-indigo-500 hover:text-indigo-700 flex-shrink-0">
+            View ↗
+          </a>
+        )}
         <span className={`pill flex-shrink-0 ${STATUS_CLS[pub.status] || 'pill-gray'}`}>
           {pub.status}
         </span>

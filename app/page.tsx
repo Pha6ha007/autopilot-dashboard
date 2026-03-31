@@ -154,12 +154,17 @@ export default async function DashboardPage() {
         </div>
         <div className="space-y-1.5">
           {recentPubs.slice(0, 6).map((pub: any) => (
-            <div key={pub.id} className="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-white/30 transition-colors">
+            <a key={pub.id}
+              href={pub.publish_url || `/products/${pub.product_id}`}
+              target={pub.publish_url ? '_blank' : undefined}
+              rel={pub.publish_url ? 'noopener noreferrer' : undefined}
+              className="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-white/40 transition-colors group">
               <PlatformIcon platform={pub.platform} size={16} />
-              <span className="text-xs text-gray-700 flex-1 truncate">{pub.topic || 'Post published'}</span>
+              <span className="text-xs text-gray-700 flex-1 truncate group-hover:text-indigo-600">{pub.topic || 'Post published'}</span>
               <span className="text-[10px] text-gray-400">{pub.product_id}</span>
+              {pub.publish_url && <span className="text-[10px] text-indigo-400 opacity-0 group-hover:opacity-100">↗</span>}
               <span className={`w-1.5 h-1.5 rounded-full ${pub.status === 'published' ? 'bg-emerald-400' : pub.status === 'failed' ? 'bg-red-400' : 'bg-gray-300'}`} />
-            </div>
+            </a>
           ))}
           {recentPubs.length === 0 && <p className="text-xs text-gray-400 text-center py-3">No recent activity</p>}
         </div>
