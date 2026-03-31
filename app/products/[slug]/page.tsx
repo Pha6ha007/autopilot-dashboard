@@ -98,16 +98,32 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 fade-up">
         {[
-          { label: 'Total Published', value: s.total, cls: 'text-gray-900' },
-          { label: 'Last 30 Days',    value: s.last30, cls: 'text-blue-600' },
-          { label: 'This Week',       value: s.last7,  cls: 'text-emerald-600' },
-          { label: 'Errors',          value: s.errors, cls: 'text-red-500' },
+          { label: 'Total Published', value: s.total, cls: 'text-gray-900', href: `/products/${slug}#published` },
+          { label: 'Pending',         value: pubs.filter((p: any) => p.status !== 'published' && p.status !== 'failed').length, cls: 'text-blue-600', href: '/drafts' },
+          { label: 'This Week',       value: s.last7,  cls: 'text-emerald-600', href: '/calendar' },
+          { label: 'Errors',          value: s.errors, cls: 'text-red-500', href: '/errors' },
         ].map((st) => (
-          <div key={st.label} className="glass rounded-2xl p-4 stat-card">
+          <Link key={st.label} href={st.href} className="glass rounded-2xl p-4 stat-card hover:shadow-md transition-all">
             <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">{st.label}</p>
             <p className={`text-3xl font-display font-semibold mt-1 ${st.cls}`}>{st.value}</p>
-          </div>
+          </Link>
         ))}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex items-center gap-3 fade-up">
+        <Link href={`/content?product=${slug}`} className="glass-hover rounded-xl px-4 py-2.5 text-sm font-medium text-indigo-600 hover:shadow-md transition-all">
+          + Create content
+        </Link>
+        <Link href={`/calendar`} className="glass-hover rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:shadow-md transition-all">
+          📅 Calendar
+        </Link>
+        <Link href={`/analytics`} className="glass-hover rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:shadow-md transition-all">
+          📊 Analytics
+        </Link>
+        <Link href={`/drafts`} className="glass-hover rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:shadow-md transition-all">
+          ✏️ Drafts
+        </Link>
       </div>
 
       {/* Platform breakdown */}
