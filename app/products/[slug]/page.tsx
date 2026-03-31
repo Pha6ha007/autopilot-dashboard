@@ -117,7 +117,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {(product.channels || []).map((ch: string) => {
             const ps = platformMap[ch] || { published: 0, failed: 0 }
             return (
-              <div key={ch} className="glass-hover rounded-xl p-3.5 text-center border border-gray-100/80 bg-white/50">
+              <Link key={ch} href={`/products/${slug}/platforms/${ch}`} className="glass-hover rounded-xl p-3.5 text-center border border-gray-100/80 bg-white/50 hover:shadow-md transition-all cursor-pointer">
                 <div className="flex justify-center mb-2">
                   <PlatformIcon platform={ch} size={28}/>
                 </div>
@@ -135,7 +135,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     {formatDistanceToNow(new Date(ps.last), { addSuffix: true })}
                   </p>
                 )}
-              </div>
+              </Link>
             )
           })}
         </div>
