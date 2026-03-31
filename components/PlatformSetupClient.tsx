@@ -67,6 +67,27 @@ export function PlatformSetupClient({ initialAccounts, products }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editFields, setEditFields] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
+  const [addForm, setAddForm] = useState({ product_id: '', platform: '', username: '', email_used: '', chat_id: '', notes: '' })
+
+  const ALL_PLATFORMS = ['twitter', 'linkedin', 'instagram', 'youtube', 'tiktok', 'telegram', 'devto', 'hashnode', 'medium', 'reddit', 'facebook', 'producthunt', 'indiehackers', 'hackernews', 'github', 'googlebusiness']
+
+  const handleAddPlatform = useCallback(async () => {
+    if (!addForm.product_id || !addForm.platform) return
+    setSaving(true)
+    const resp = await fetch('/api/platform-accounts/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(addForm),
+    })
+    if (resp.ok) {
+      const { account } = await resp.json()
+      setAccounts(prev => [...prev, account])
+      setShowAdd(false)
+      setAddForm({ product_id: '', platform: '', username: '', email_used: '', chat_id: '', notes: '' })
+    }
+    setSaving(false)
+  }, [addForm])
 
   const filtered = accounts.filter(a => {
     if (filterProduct && a.product_id !== filterProduct) return false
@@ -133,7 +154,56 @@ export function PlatformSetupClient({ initialAccounts, products }: Props) {
           {Object.entries(STATUS_STYLES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
         <span className="text-xs text-gray-400 ml-auto">{filtered.length} accounts</span>
+        <button onClick={() => setShowAdd(!showAdd)} className="text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg">
+          + Add platform
+        </button>
       </div>
+
+      {/* Add platform form */}
+      {showAdd && (
+        <div className="glass rounded-xl p-4 mb-4 space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-gray-400">Product *</label>
+              <select value={addForm.product_id} onChange={e => setAddForm(p => ({ ...p, product_id: e.target.value }))} className="field-input text-sm">
+                <option value="">Select…</option>
+                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-gray-400">Platform *</label>
+              <select value={addForm.platform} onChange={e => setAddForm(p => ({ ...p, platform: e.target.value }))} className="field-input text-sm">
+                <option value="">Select…</option>
+                {ALL_PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-gray-400">Username</label>
+              <input type="text" value={addForm.username} onChange={e => setAddForm(p => ({ ...p, username: e.target.value }))} placeholder="@handle" className="field-input text-sm" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-gray-400">Email</label>
+              <input type="email" value={addForm.email_used} onChange={e => setAddForm(p => ({ ...p, email_used: e.target.value }))} placeholder="product@pavel.build" className="field-input text-sm" />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-gray-400">Chat ID (Telegram)</label>
+              <input type="text" value={addForm.chat_id} onChange={e => setAddForm(p => ({ ...p, chat_id: e.target.value }))} placeholder="-100..." className="field-input text-sm font-mono" />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-gray-400">Notes</label>
+              <input type="text" value={addForm.notes} onChange={e => setAddForm(p => ({ ...p, notes: e.target.value }))} className="field-input text-sm" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleAddPlatform} disabled={saving || !addForm.product_id || !addForm.platform} className="text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 px-4 py-1.5 rounded-lg disabled:opacity-50">
+              {saving ? 'Adding…' : 'Add'}
+            </button>
+            <button onClick={() => setShowAdd(false)} className="text-sm text-gray-500">Cancel</button>
+          </div>
+        </div>
+      )}
 
       {/* Product groups */}
       <div className="space-y-4">
