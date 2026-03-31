@@ -21,13 +21,24 @@ export default async function PlatformWorkspacePage({
   ] = await Promise.all([
     supabaseAdmin.from('products').select('*').eq('id', slug).single(),
     supabaseAdmin.from('platform_accounts').select('*').eq('product_id', slug).eq('platform', platform).maybeSingle(),
-    supabaseAdmin.from('generated_content').select('*').eq('product_id', slug).eq('platform', platform).in('status', ['draft', 'approved', 'pending']).order('created_at', { ascending: false }).limit(10),
-    supabaseAdmin.from('publications').select('*').eq('product_id', slug).eq('platform', platform).order('created_at', { ascending: false }).limit(10),
+    supabaseAdmin.from('generated_content').select('id, content, status, topic, created_at').eq('product_id', slug).eq('platform', platform).in('status', ['draft', 'approved', 'pending', 'queued']).order('created_at', { ascending: false }).limit(10),
+    supabaseAdmin.from('publications').select('id, topic, content_preview, platform, status, published_at, publish_url').eq('product_id', slug).eq('platform', platform).order('published_at', { ascending: false }).limit(10),
     supabaseAdmin.from('content_metrics').select('*').eq('product_id', slug).eq('platform', platform).order('created_at', { ascending: false }).limit(20),
-    supabaseAdmin.from('content_plan').select('*').eq('product_id', slug).order('scheduled_for').gte('scheduled_for', new Date().toISOString().split('T')[0]).limit(10),
+    supabaseAdmin.from('content_plan').select('id, topic, type, scheduled_for, status, platforms').eq('product_id', slug).eq('status', 'scheduled').gte('scheduled_for', new Date().toISOString().split('T')[0]).order('scheduled_for').limit(20),
   ])
 
   if (!product) notFound()
+
+  // Filter plan by platform on JS side (platforms is a text[] column)
+  const filteredPlan = (plan || []).filter(p => {
+    const platforms = p.platforms
+    if (!platforms) return false
+    if (Array.isArray(platforms)) return platforms.includes(platform)
+    if (typeof platforms === 'string') {
+      try { return JSON.parse(platforms).includes(platform) } catch { return platforms.includes(platform) }
+    }
+    return false
+  })
 
   return (
     <PlatformWorkspaceClient
@@ -37,7 +48,7 @@ export default async function PlatformWorkspacePage({
       queue={queue || []}
       published={published || []}
       metrics={metrics || []}
-      plan={(plan || []).filter(p => (p.platforms || []).includes(platform))}
+      plan={filteredPlan}
     />
   )
 }

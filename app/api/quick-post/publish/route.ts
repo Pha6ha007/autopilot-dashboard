@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   try {
-    const { product_id, platform, content, topic, image_url, chat_id } = await req.json()
+    const { product_id, platform, content, topic, image_url, chat_id, channel_username } = await req.json()
 
     if (!product_id || !platform || !content) {
       return NextResponse.json({ error: 'product_id, platform, content required' }, { status: 400 })
@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
 
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
     let externalId = ''
+    let publishUrl = ''
 
     // Publish to Telegram
     if (platform === 'telegram' && BOT_TOKEN && chat_id) {
@@ -45,6 +46,11 @@ export async function POST(req: NextRequest) {
         if (resp.ok) {
           const d = await resp.json()
           externalId = String(d.result?.message_id || '')
+          // Construct publish_url for channels: https://t.me/{username}/{message_id}
+          if (externalId && channel_username) {
+            const username = channel_username.replace(/^@/, '')
+            publishUrl = `https://t.me/${username}/${externalId}`
+          }
         } else {
           const errText = await resp.text()
           return NextResponse.json({ error: `Telegram error: ${errText.slice(0, 200)}` }, { status: 502 })
@@ -87,9 +93,10 @@ export async function POST(req: NextRequest) {
       status: 'published',
       published_at: new Date().toISOString(),
       external_id: externalId || null,
+      publish_url: publishUrl || null,
     })
 
-    return NextResponse.json({ ok: true, external_id: externalId, platform })
+    return NextResponse.json({ ok: true, external_id: externalId, publish_url: publishUrl || null, platform })
   } catch (e: unknown) {
     return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }

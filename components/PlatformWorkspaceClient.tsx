@@ -10,7 +10,7 @@ type Props = {
   platform: string
   account: { username?: string; profile_url?: string; status: string; email_used?: string; followers_goal?: number; chat_id?: string } | null
   queue: { id: string; content: string; status: string; topic?: string; created_at: string }[]
-  published: { id: string; title: string; platform: string; status: string; published_at?: string; publish_url?: string }[]
+  published: { id: string; topic?: string; content_preview?: string; platform: string; status: string; published_at?: string; publish_url?: string }[]
   metrics: { views: number; likes: number; comments: number; shares: number; engagement_rate: number; created_at: string }[]
   plan: { id: number; topic: string; type: string; scheduled_for: string; status: string }[]
 }
@@ -125,6 +125,7 @@ export function PlatformWorkspaceClient({ product, platform, account, queue, pub
             productName={product.name}
             platform={platform}
             chatId={account?.chat_id}
+            channelUsername={account?.username}
           />
         </div>
 
@@ -152,7 +153,7 @@ export function PlatformWorkspaceClient({ product, platform, account, queue, pub
               {metrics.length > 0 && published.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-100/80">
                   <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Best performing post</p>
-                  <p className="text-xs text-gray-700 truncate">{published[0]?.title || 'N/A'}</p>
+                  <p className="text-xs text-gray-700 truncate">{published[0]?.topic || published[0]?.content_preview || 'N/A'}</p>
                 </div>
               )}
             </div>
@@ -212,13 +213,21 @@ export function PlatformWorkspaceClient({ product, platform, account, queue, pub
               <p className="text-gray-400 text-sm text-center py-4">No publications yet</p>
             ) : (
               <div className="space-y-2">
-                {published.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 py-1.5 border-b border-gray-100/60 last:border-0">
-                    <span className="text-xs text-gray-700 flex-1 truncate">{p.title}</span>
-                    {p.published_at && <span className="text-[10px] text-gray-400">{new Date(p.published_at).toLocaleDateString()}</span>}
-                    {p.publish_url && <a href={p.publish_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-500">↗</a>}
-                  </div>
-                ))}
+                {published.map(p => {
+                  const preview = p.content_preview || p.topic || ''
+                  const displayText = preview.length > 60 ? preview.slice(0, 60) + '…' : preview
+                  const date = p.published_at ? new Date(p.published_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''
+                  return (
+                    <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-gray-100/60 last:border-0">
+                      <PlatformIcon platform={p.platform} size={14} />
+                      <span className="text-xs text-gray-700 flex-1 truncate">{displayText || '—'}</span>
+                      {date && <span className="text-[10px] text-gray-400 shrink-0">{date}</span>}
+                      {p.publish_url && (
+                        <a href={p.publish_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-500 hover:text-indigo-700 shrink-0">↗</a>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>

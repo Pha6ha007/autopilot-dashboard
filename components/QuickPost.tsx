@@ -7,6 +7,7 @@ type Props = {
   productName: string
   platform: string
   chatId?: string
+  channelUsername?: string
 }
 
 const CHAR_LIMITS: Record<string, number> = {
@@ -14,7 +15,7 @@ const CHAR_LIMITS: Record<string, number> = {
   devto: 8000, reddit: 10000, facebook: 5000,
 }
 
-export function QuickPost({ productId, productName, platform, chatId }: Props) {
+export function QuickPost({ productId, productName, platform, chatId, channelUsername }: Props) {
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<'write' | 'generate'>('write')
   const [topic, setTopic] = useState('')
@@ -24,6 +25,7 @@ export function QuickPost({ productId, productName, platform, chatId }: Props) {
   const [result, setResult] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [imageLoading, setImageLoading] = useState(false)
+  const [publishUrl, setPublishUrl] = useState('')
 
   const charLimit = CHAR_LIMITS[platform] || 5000
 
@@ -81,11 +83,14 @@ export function QuickPost({ productId, productName, platform, chatId }: Props) {
           topic: topic || content.slice(0, 80),
           image_url: imageUrl || undefined,
           chat_id: chatId,
+          channel_username: channelUsername,
         }),
       })
       const data = await resp.json()
       if (resp.ok) {
-        setResult(`✅ Published! ${data.external_id ? `#${data.external_id}` : ''}`)
+        const linkText = data.publish_url ? ` — ` : (data.external_id ? ` #${data.external_id}` : '')
+        setResult(`✅ Published!${linkText}`)
+        setPublishUrl(data.publish_url || '')
         setContent('')
         setTopic('')
         setImageUrl('')
@@ -96,7 +101,7 @@ export function QuickPost({ productId, productName, platform, chatId }: Props) {
       setResult('❌ Network error')
     }
     setPublishing(false)
-  }, [productId, platform, content, topic, imageUrl, chatId])
+  }, [productId, platform, content, topic, imageUrl, chatId, channelUsername])
 
   if (!open) {
     return (
@@ -171,7 +176,12 @@ export function QuickPost({ productId, productName, platform, chatId }: Props) {
           className="text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 px-5 py-2 rounded-xl disabled:opacity-50 shadow-md shadow-indigo-100">
           {publishing ? '⏳ Publishing…' : '🚀 Publish now'}
         </button>
-        {result && <span className="text-sm">{result}</span>}
+        {result && (
+          <span className="text-sm">
+            {result}
+            {publishUrl && <a href={publishUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-700 ml-1">View ↗</a>}
+          </span>
+        )}
       </div>
     </div>
   )
