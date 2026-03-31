@@ -31,7 +31,15 @@ export function ProductActions({ product }: {
   }, [product.id])
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="space-y-2">
+      {/* Status badge */}
+      <span className={`pill ${paused ? 'pill-yellow' : 'pill-green'}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${paused ? 'bg-amber-500' : 'bg-emerald-500'} inline-block`}/>
+        {paused ? 'paused' : 'active'}
+      </span>
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-2 flex-wrap">
       <button
         onClick={togglePause}
         disabled={loading}
@@ -60,6 +68,7 @@ export function ProductActions({ product }: {
       {syncResult && (
         <span className="text-xs text-blue-500">{syncResult}</span>
       )}
+      </div>
     </div>
   )
 }
