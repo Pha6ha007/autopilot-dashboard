@@ -22,7 +22,7 @@ export async function GET() {
     const trace = lf.trace({ name: 'debug-test', tags: ['debug'] })
     trace.generation({ name: 'debug-gen', model: 'test', input: 'test', output: 'ok' })
     trace.update({ output: 'debug complete' })
-    await lf.flushAsync()
+    await lf.shutdownAsync()
     return NextResponse.json({ ok: true, pk: pk?.slice(0, 12), baseUrl, flushed: true })
   } catch (e) {
     return NextResponse.json({ ok: false, reason: 'flush error', error: e instanceof Error ? e.message : String(e) })
