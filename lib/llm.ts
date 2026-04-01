@@ -150,8 +150,10 @@ export async function callLLM(params: {
 
         lfTrace.update({ output: content.slice(0, 500) })
 
-        // Flush async — don't block response
-        langfuse?.flushAsync().catch(() => {})
+        // Await flush — required on serverless (Vercel) where function freezes after response
+        try {
+          await langfuse?.flushAsync()
+        } catch { /* tracing must never break the response */ }
       }
 
       return {
@@ -164,7 +166,7 @@ export async function callLLM(params: {
         // Log final failure
         if (lfTrace) {
           lfTrace.update({ output: `Error: ${e instanceof Error ? e.message : String(e)}` })
-          langfuse?.flushAsync().catch(() => {})
+          try { await langfuse?.flushAsync() } catch { /* ignore */ }
         }
         throw e
       }
