@@ -1,30 +1,75 @@
 import { NextResponse } from 'next/server'
-import { createLangfuse } from '@/lib/langfuse'
 
-// GET /api/debug-langfuse — test Langfuse connectivity (temporary)
+// GET /api/debug-langfuse — test Langfuse connectivity via raw HTTP
 export async function GET() {
   const pk = process.env.LANGFUSE_PUBLIC_KEY
   const sk = process.env.LANGFUSE_SECRET_KEY
-  const baseUrl = process.env.LANGFUSE_BASE_URL
+  const baseUrl = (process.env.LANGFUSE_BASE_URL || 'https://cloud.langfuse.com').trim()
 
-  const hasKeys = !!(pk && sk)
-
-  if (!hasKeys) {
-    return NextResponse.json({ ok: false, reason: 'missing keys', pk: !!pk, sk: !!sk, baseUrl: !!baseUrl })
+  if (!pk || !sk) {
+    return NextResponse.json({ ok: false, reason: 'missing keys', pk: !!pk, sk: !!sk })
   }
 
-  const lf = createLangfuse()
-  if (!lf) {
-    return NextResponse.json({ ok: false, reason: 'createLangfuse returned null' })
-  }
+  const traceId = crypto.randomUUID()
+  const genId = crypto.randomUUID()
+  const now = new Date().toISOString()
 
+  // Direct HTTP POST to Langfuse ingestion API
   try {
-    const trace = lf.trace({ name: 'debug-test', tags: ['debug'] })
-    trace.generation({ name: 'debug-gen', model: 'test', input: 'test', output: 'ok' })
-    trace.update({ output: 'debug complete' })
-    await lf.shutdownAsync()
-    return NextResponse.json({ ok: true, pk: pk?.slice(0, 12), baseUrl, flushed: true })
+    const auth = Buffer.from(`${pk}:${sk}`).toString('base64')
+    const resp = await fetch(`${baseUrl}/api/public/ingestion`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${auth}`,
+      },
+      body: JSON.stringify({
+        batch: [
+          {
+            type: 'trace-create',
+            id: crypto.randomUUID(),
+            timestamp: now,
+            body: {
+              id: traceId,
+              name: 'debug-raw-http',
+              tags: ['debug', 'raw-http'],
+              output: 'debug via raw HTTP',
+            },
+          },
+          {
+            type: 'generation-create',
+            id: crypto.randomUUID(),
+            timestamp: now,
+            body: {
+              traceId,
+              id: genId,
+              name: 'test-gen',
+              model: 'test-model',
+              input: [{ role: 'user', content: 'debug test' }],
+              output: 'debug response',
+              startTime: now,
+              endTime: now,
+            },
+          },
+        ],
+      }),
+    })
+
+    const body = await resp.text()
+    return NextResponse.json({
+      ok: resp.ok,
+      status: resp.status,
+      body: body.slice(0, 500),
+      pk: pk.slice(0, 12),
+      baseUrl,
+      traceId,
+    })
   } catch (e) {
-    return NextResponse.json({ ok: false, reason: 'flush error', error: e instanceof Error ? e.message : String(e) })
+    return NextResponse.json({
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
+      pk: pk.slice(0, 12),
+      baseUrl,
+    })
   }
 }
