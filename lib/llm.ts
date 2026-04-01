@@ -153,7 +153,8 @@ export async function callLLM(params: {
         // Await flush — required on serverless (Vercel)
         try {
           await langfuse?.flushAsync()
-        } catch { /* tracing must never break the response */ }
+          console.log('[Langfuse] flushed trace ok')
+        } catch (e) { console.error('[Langfuse] flush error:', e) }
       }
 
       return {
