@@ -1,7 +1,7 @@
 // Model selection logic based on task type and platform
 // Used by scrape-product, regenerate, and future endpoints
 
-import { getLangfuse } from './langfuse'
+import { createLangfuse } from './langfuse'
 
 export type TaskType = 'scrape' | 'social-post' | 'article' | 'content-plan' | 'script' | 'regenerate'
 
@@ -57,7 +57,7 @@ export async function callLLM(params: {
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not configured')
 
   const fallbackModel = (process.env.MODEL_FALLBACK || 'anthropic/claude-sonnet-4').trim()
-  const langfuse = getLangfuse()
+  const langfuse = createLangfuse()
   const startTime = new Date()
 
   // Create Langfuse trace if available
@@ -150,9 +150,9 @@ export async function callLLM(params: {
 
         lfTrace.update({ output: content.slice(0, 500) })
 
-        // Await flush — required on serverless (Vercel) where function freezes after response
+        // Await shutdown — required on serverless (Vercel) where function freezes after response
         try {
-          await langfuse?.flushAsync()
+          await langfuse?.shutdownAsync()
         } catch { /* tracing must never break the response */ }
       }
 
@@ -166,7 +166,7 @@ export async function callLLM(params: {
         // Log final failure
         if (lfTrace) {
           lfTrace.update({ output: `Error: ${e instanceof Error ? e.message : String(e)}` })
-          try { await langfuse?.flushAsync() } catch { /* ignore */ }
+          try { await langfuse?.shutdownAsync() } catch { /* ignore */ }
         }
         throw e
       }
