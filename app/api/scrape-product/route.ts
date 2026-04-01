@@ -53,6 +53,11 @@ export async function POST(req: NextRequest) {
         { role: 'system', content: EXTRACT_PROMPT },
         { role: 'user', content: `Website URL: ${url}\n\n---\n\n${siteText}` },
       ],
+      trace: {
+        name: 'scrape-product',
+        tags: ['scrape'],
+        metadata: { url },
+      },
     })
 
     // Parse JSON from response

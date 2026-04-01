@@ -76,6 +76,13 @@ Write ONLY the post text. No JSON, no explanations, no markdown fences.`
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Topic: ${draft.topic}\n\nPrevious version (improve on this):\n${draft.content}` },
       ],
+      trace: {
+        name: 'regenerate-content',
+        userId: draft.product_id,
+        sessionId: draft.platform,
+        tags: [draft.platform, draft.product_id, `size:${contentSize}`],
+        metadata: { draftId: id, topic: draft.topic, instructions: instructions || null },
+      },
     })
 
     if (!result.content) throw new Error('Empty response from LLM')
